@@ -1,0 +1,2297 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0284C7" />
+  <title>SakuKelas Kelas 1 - Belajar Ceria Tanpa Lemot</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" href="./icons/icon-192.png" type="image/png" />
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="SakuKelas" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+
+  <!-- CSS statis lokal (build Tailwind). Tanpa CDN supaya offline-first benar-benar offline. -->
+  <link rel="stylesheet" href="./styles.css" />
+
+  <style>
+    body {
+      font-family: 'Nunito', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      background-color: #F8FAFC;
+      color: #1E293B;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    @keyframes popIn {
+      0% { transform: scale(0.96); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .animate-pop { animation: popIn 0.2s ease-out forwards; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col selection:bg-sky-200 selection:text-sky-900">
+
+  <!-- TOP NAVIGATION -->
+  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur-xs border-b border-slate-200/80">
+    <div class="max-w-4xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-2">
+      <!-- Brand -->
+      <button onclick="goHome()" class="flex items-center gap-2.5 text-left group min-h-[48px] focus:outline-none">
+        <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-sky-500 to-blue-600 flex items-center justify-center text-white shadow-xs group-active:scale-95 transition-transform">
+          <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <span class="font-black text-lg sm:text-xl tracking-tight text-slate-800">Saku<span class="text-sky-600">Kelas</span></span>
+            <span class="px-2 py-0.5 rounded-lg bg-amber-100 text-amber-800 font-black text-xs">Kelas 1</span>
+          </div>
+          <p class="text-[11px] font-bold text-slate-400 leading-none">Buku Lengkap • Offline-First</p>
+        </div>
+      </button>
+
+      <!-- Status, Admin Studio (Hidden), Sync & Logout -->
+      <div class="flex items-center gap-2">
+        <div id="sync-badge" class="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
+          <span id="sync-dot" class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          <span id="sync-text">Mode Offline</span>
+        </div>
+
+        <!-- Hidden untuk pembeli biasa. Muncul hanya jika diakses dengan ?admin=1 -->
+        <button id="btn-admin-studio" onclick="openStudioModal()" class="hidden min-h-[44px] px-3.5 py-2 rounded-2xl bg-amber-400 hover:bg-amber-500 active:scale-95 text-amber-950 font-black text-xs sm:text-sm items-center gap-1.5 shadow-2xs transition">
+          <span>+ Tambah Materi</span>
+        </button>
+
+        <button id="btn-sync" onclick="syncDataFromCloud(true)" title="Update Materi & Soal"
+          class="min-h-[44px] min-w-[44px] px-3 py-2 rounded-2xl bg-sky-50 hover:bg-sky-100 active:scale-95 text-sky-700 font-extrabold text-xs sm:text-sm border border-sky-200 flex items-center justify-center transition">
+          <svg id="sync-icon" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+            <path d="M3 3v5h5" />
+            <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
+            <path d="M16 16h5v5" />
+          </svg>
+        </button>
+
+        <button id="btn-logout" onclick="handleLogout()" title="Keluar Akun"
+          class="hidden min-h-[44px] px-3 py-2 rounded-2xl bg-rose-50 hover:bg-rose-100 active:scale-95 text-rose-700 font-extrabold text-xs border border-rose-200 transition">
+          Keluar
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- TOAST -->
+  <div id="toast-banner" class="hidden max-w-4xl mx-auto w-full px-4 pt-3">
+    <div id="toast-inner" class="px-4 py-3 rounded-2xl text-sm font-bold flex items-center justify-between gap-3 bg-sky-50 text-sky-900 border border-sky-200">
+      <span id="toast-message">Pesan status</span>
+      <button onclick="hideToast()" class="text-xs font-extrabold underline opacity-75">Tutup</button>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <main class="flex-1 max-w-4xl w-full mx-auto px-4 py-5 pb-12">
+
+    <!-- VIEW 1: BERANDA FOLDER SEMESTER & BAB -->
+    <section id="view-home" class="space-y-6 animate-pop">
+      <div class="bg-gradient-to-r from-sky-500 via-blue-500 to-indigo-500 rounded-3xl p-5 sm:p-6 text-white shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <span class="inline-block px-3 py-1 rounded-full bg-white/20 text-xs font-extrabold tracking-wide mb-2">
+              🌟 KURIKULUM MERDEKA & JARIMATIKA
+            </span>
+            <h1 id="hero-greeting" class="text-2xl sm:text-3xl font-black leading-tight">Halo, Adik Kelas 1! 👋</h1>
+            <p class="text-sky-100 text-sm sm:text-base font-semibold mt-1">
+              Pilih Folder Semester di bawah ini, lalu ketuk bab pelajaran untuk mulai belajar!
+            </p>
+          </div>
+          <div class="bg-white/15 backdrop-blur-xs rounded-2xl p-3.5 border border-white/20 text-center shrink-0">
+            <div class="text-xs font-bold text-sky-100">Bab Selesai</div>
+            <div id="home-progress-counter" class="text-2xl font-black text-amber-300 mt-0.5">0 / 0</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FOLDER SEMESTER 1 & 2 -->
+      <div class="grid grid-cols-2 gap-3 sm:gap-4">
+        <button id="folder-sem-1" onclick="selectSemester(1)"
+          class="min-h-[76px] p-4 rounded-3xl border-2 text-left transition flex items-center gap-3.5 shadow-2xs">
+          <div class="w-12 h-12 rounded-2xl bg-amber-100 text-amber-700 flex items-center justify-center text-2xl shrink-0">📁</div>
+          <div>
+            <div class="font-black text-base sm:text-lg leading-tight">Semester 1</div>
+            <div class="text-xs font-bold opacity-80 mt-0.5">Ganjil • <span id="count-sem-1">0</span> Bab</div>
+          </div>
+        </button>
+
+        <button id="folder-sem-2" onclick="selectSemester(2)"
+          class="min-h-[76px] p-4 rounded-3xl border-2 text-left transition flex items-center gap-3.5 shadow-2xs">
+          <div class="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center text-2xl shrink-0">📂</div>
+          <div>
+            <div class="font-black text-base sm:text-lg leading-tight">Semester 2</div>
+            <div class="text-xs font-bold opacity-80 mt-0.5">Genap • <span id="count-sem-2">0</span> Bab</div>
+          </div>
+        </button>
+      </div>
+
+      <!-- FILTER MATA PELAJARAN -->
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <h2 id="semester-heading" class="text-lg font-extrabold text-slate-800 flex items-center gap-2">
+            <span>📚 Daftar Pelajaran Semester 1 (Ganjil)</span>
+          </h2>
+        </div>
+        <div id="subject-filter-pills" class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1"></div>
+      </div>
+
+      <!-- DAFTAR BAB -->
+      <div id="chapters-container" class="space-y-6"></div>
+    </section>
+
+    <!-- VIEW 2: RUANG BELAJAR BAB (4 TAB) -->
+    <section id="view-study" class="hidden space-y-5 animate-pop">
+      <div class="bg-white rounded-3xl p-4 sm:p-5 border border-slate-200/90 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="flex items-start gap-3">
+          <button onclick="goHome()"
+            class="min-h-[48px] min-w-[48px] rounded-2xl bg-slate-100 hover:bg-slate-200 active:scale-95 flex items-center justify-center text-slate-700 font-bold shrink-0 transition"
+            aria-label="Kembali">
+            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="m15 18-6-6 6-6" />
+            </svg>
+          </button>
+          <div>
+            <div class="flex flex-wrap items-center gap-1.5 mb-1">
+              <span id="study-badge-sem" class="px-2.5 py-0.5 rounded-lg text-xs font-extrabold bg-amber-100 text-amber-800">Semester 1</span>
+              <span id="study-badge-mapel" class="px-2.5 py-0.5 rounded-lg text-xs font-extrabold bg-sky-100 text-sky-800">Mapel</span>
+            </div>
+            <h1 id="study-chapter-title" class="text-xl sm:text-2xl font-black text-slate-800 leading-snug">Judul Bab</h1>
+          </div>
+        </div>
+
+        <button id="btn-mark-done" onclick="toggleChapterComplete()"
+          class="min-h-[48px] px-4 py-2.5 rounded-2xl font-extrabold text-sm border-2 transition flex items-center justify-center gap-2 shrink-0">
+          <span id="mark-done-icon">⬜</span>
+          <span id="mark-done-text">Tandai Selesai</span>
+        </button>
+      </div>
+
+      <!-- 4 TAB NAVIGASI -->
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-slate-200/70 p-1.5 rounded-3xl">
+        <button onclick="switchStudyTab('ringkasan')" id="tab-btn-ringkasan"
+          class="min-h-[48px] px-3 py-2.5 rounded-2xl font-extrabold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition">
+          <span>📖</span><span>Ringkasan</span>
+        </button>
+        <button onclick="switchStudyTab('caracepat')" id="tab-btn-caracepat"
+          class="min-h-[48px] px-3 py-2.5 rounded-2xl font-extrabold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition">
+          <span>⚡</span><span>Cara Cepat</span>
+        </button>
+        <button onclick="switchStudyTab('visual')" id="tab-btn-visual"
+          class="min-h-[48px] px-3 py-2.5 rounded-2xl font-extrabold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition">
+          <span>🎨</span><span>Visual & Video</span>
+        </button>
+        <button onclick="switchStudyTab('latihan')" id="tab-btn-latihan"
+          class="min-h-[48px] px-3 py-2.5 rounded-2xl font-extrabold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition">
+          <span>🎯</span><span>Latihan Soal</span>
+        </button>
+      </div>
+
+      <div id="study-tab-content" class="animate-pop"></div>
+    </section>
+  </main>
+
+  <!-- LAYAR LOGIN PEMBELI -->
+  <div id="login-gate" class="hidden fixed inset-0 z-50 bg-slate-900/80 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-200 space-y-5 animate-pop">
+      <div class="text-center space-y-1.5">
+        <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-sky-500 to-blue-600 text-white flex items-center justify-center text-2xl font-black mx-auto shadow-sm">
+          🎒
+        </div>
+        <h2 class="text-2xl font-black text-slate-800">Masuk ke SakuKelas</h2>
+        <p class="text-xs sm:text-sm font-semibold text-slate-500">
+          Masukkan Kode Akses & PIN yang kamu terima saat pembelian untuk menyimpan progres belajar anak.
+        </p>
+      </div>
+
+      <form onsubmit="handleLoginSubmit(event)" class="space-y-3.5">
+        <div>
+          <label class="block text-xs font-extrabold text-slate-600 mb-1">Kode Akses</label>
+          <input id="login-kode" type="text" required placeholder="Contoh: BUDI2026" autocomplete="off"
+            class="w-full min-h-[48px] px-4 rounded-2xl border-2 border-slate-200 font-black uppercase text-sm focus:border-sky-500 outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-extrabold text-slate-600 mb-1">PIN (4-6 Angka)</label>
+          <input id="login-pin" type="password" inputmode="numeric" required placeholder="••••"
+            class="w-full min-h-[48px] px-4 rounded-2xl border-2 border-slate-200 font-black text-sm tracking-widest focus:border-sky-500 outline-none" />
+        </div>
+
+        <div id="login-error" class="hidden p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs font-bold text-rose-700 text-center"></div>
+
+        <button id="btn-login-submit" type="submit"
+          class="w-full min-h-[50px] rounded-2xl bg-sky-600 hover:bg-sky-700 text-white font-black text-base shadow-xs transition">
+          Masuk & Mulai Belajar
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL TAMBAH / UPLOAD MATERI (KHUSUS ADMIN) -->
+  <div id="studio-modal" class="hidden fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-5 sm:p-6 shadow-xl border border-slate-200 space-y-5 my-auto max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div>
+          <h2 class="text-xl font-black text-slate-800">📥 Tambah & Upload Materi</h2>
+          <p class="text-xs font-bold text-slate-500">Tambah bab baru langsung ke memori perangkat atau upload file .JSON</p>
+        </div>
+        <button onclick="closeStudioModal()" class="min-h-[44px] min-w-[44px] rounded-2xl bg-slate-100 hover:bg-slate-200 font-black text-slate-600">✕</button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 bg-slate-100 p-1.5 rounded-2xl">
+        <button id="studio-tab-form" onclick="switchStudioMode('form')" class="min-h-[44px] rounded-xl font-extrabold text-xs sm:text-sm bg-white text-sky-700 shadow-2xs">
+          ✍️ Tulis Bab Baru
+        </button>
+        <button id="studio-tab-json" onclick="switchStudioMode('json')" class="min-h-[44px] rounded-xl font-extrabold text-xs sm:text-sm text-slate-600">
+          📂 Upload / Backup JSON
+        </button>
+      </div>
+
+      <!-- MODE FORM -->
+      <form id="studio-form-panel" onsubmit="handleSaveNewChapter(event)" class="space-y-3.5">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-extrabold text-slate-600 mb-1">Folder Semester</label>
+            <select id="inp-semester" required class="w-full min-h-[46px] px-3.5 rounded-2xl border-2 border-slate-200 font-bold text-sm focus:border-sky-500 outline-none">
+              <option value="1">Semester 1 (Ganjil)</option>
+              <option value="2">Semester 2 (Genap)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-extrabold text-slate-600 mb-1">Mata Pelajaran</label>
+            <select id="inp-mapel" required class="w-full min-h-[46px] px-3.5 rounded-2xl border-2 border-slate-200 font-bold text-sm focus:border-sky-500 outline-none">
+              <option value="Pendidikan Pancasila">🦅 Pendidikan Pancasila</option>
+              <option value="Matematika">📐 Matematika</option>
+              <option value="Jarimatika">🖐️ Jarimatika</option>
+              <option value="Bahasa Indonesia">📘 Bahasa Indonesia</option>
+              <option value="Pendidikan Agama Islam">🕌 Pendidikan Agama Islam</option>
+              <option value="Bahasa Inggris">🔤 Bahasa Inggris</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-extrabold text-slate-600 mb-1">Judul Bab</label>
+          <input id="inp-bab" type="text" required placeholder="Contoh: Bab 5: Mengenal Nilai Uang Koin"
+            class="w-full min-h-[46px] px-3.5 rounded-2xl border-2 border-slate-200 font-bold text-sm focus:border-sky-500 outline-none" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-extrabold text-slate-600 mb-1">Ringkasan Materi</label>
+          <textarea id="inp-ringkasan" rows="2" required placeholder="Tulis penjelasan singkat yang mudah dipahami anak..."
+            class="w-full p-3.5 rounded-2xl border-2 border-slate-200 font-semibold text-sm focus:border-sky-500 outline-none"></textarea>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-extrabold text-slate-600 mb-1">Poin Penting Utama</label>
+            <input id="inp-poin" type="text" required placeholder="Contoh: Uang logam Rp500 dan Rp1.000"
+              class="w-full min-h-[46px] px-3.5 rounded-2xl border-2 border-slate-200 font-semibold text-sm focus:border-sky-500 outline-none" />
+          </div>
+          <div>
+            <label class="block text-xs font-extrabold text-amber-700 mb-1">⚡ Trik Cara Cepat</label>
+            <input id="inp-trik" type="text" required placeholder="Contoh: Hitung jumlah nol-nya!"
+              class="w-full min-h-[46px] px-3.5 rounded-2xl border-2 border-amber-200 bg-amber-50/40 font-semibold text-sm focus:border-amber-500 outline-none" />
+          </div>
+        </div>
+
+        <div class="p-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-200 space-y-2.5">
+          <div class="font-extrabold text-xs text-emerald-900 uppercase">🎯 1 Soal Latihan Wajib</div>
+          <input id="inp-q" type="text" required placeholder="Pertanyaan kuis..."
+            class="w-full min-h-[44px] px-3 rounded-xl border border-emerald-200 bg-white font-bold text-sm" />
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <input id="inp-ans-ok" type="text" required placeholder="✓ Jawaban Benar"
+              class="w-full min-h-[42px] px-3 rounded-xl border-2 border-emerald-400 bg-white font-bold text-xs" />
+            <input id="inp-ans-w1" type="text" required placeholder="✕ Pilihan Salah 1"
+              class="w-full min-h-[42px] px-3 rounded-xl border border-slate-200 bg-white font-semibold text-xs" />
+            <input id="inp-ans-w2" type="text" required placeholder="✕ Pilihan Salah 2"
+              class="w-full min-h-[42px] px-3 rounded-xl border border-slate-200 bg-white font-semibold text-xs" />
+            <input id="inp-ans-w3" type="text" required placeholder="✕ Pilihan Salah 3"
+              class="w-full min-h-[42px] px-3 rounded-xl border border-slate-200 bg-white font-semibold text-xs" />
+          </div>
+        </div>
+
+        <button type="submit" class="w-full min-h-[50px] rounded-2xl bg-sky-600 hover:bg-sky-700 text-white font-black text-base shadow-xs transition">
+          💾 Simpan Bab ke Folder Semester
+        </button>
+      </form>
+
+      <!-- MODE UPLOAD / BACKUP JSON -->
+      <div id="studio-json-panel" class="hidden space-y-4">
+        <div class="p-4 rounded-2xl bg-sky-50 border border-sky-200 space-y-2">
+          <h3 class="font-black text-sm text-sky-900">1. Upload File Paket Materi (.JSON)</h3>
+          <p class="text-xs font-semibold text-sky-800">Pilih file <code>.json</code> untuk menambahkan bab baru secara instan.</p>
+          <label class="block mt-2">
+            <span class="sr-only">Pilih File JSON</span>
+            <input type="file" accept=".json,application/json" onchange="handleJsonFileUpload(event)"
+              class="block w-full text-xs text-slate-600 file:mr-3 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-extrabold file:bg-sky-600 file:text-white hover:file:bg-sky-700 cursor-pointer" />
+          </label>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-amber-50 border border-amber-200 space-y-2">
+          <h3 class="font-black text-sm text-amber-900">2. Download / Backup Seluruh Materi Saat Ini</h3>
+          <p class="text-xs font-semibold text-amber-800">Unduh seluruh materi Semester 1 & 2 menjadi file <code>.json</code>.</p>
+          <button onclick="downloadAllContentJson()" class="min-h-[46px] px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs sm:text-sm">
+            ⬇️ Unduh Paket Materi (.JSON)
+          </button>
+        </div>
+
+        <div class="pt-2 border-t border-slate-100 flex justify-between items-center">
+          <span class="text-xs font-bold text-slate-400">Reset ke bawaan awal jika perlu:</span>
+          <button id="btn-reset-default" onclick="resetToDefaultContent()" class="text-xs font-extrabold text-rose-600 hover:underline">
+            Reset Data Bawaan
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    /**
+     * =====================================================================
+     * 1. KONFIGURASI GOOGLE APPS SCRIPT & CACHE OFFLINE-FIRST
+     * =====================================================================
+     */
+    // TEMPEL WEB APP URL DARI GOOGLE APPS SCRIPT KAMU DI BAWAH INI:
+    const API_URL = "https://script.google.com/macros/s/AKfycby9G_cs0eCCBnS2tcbCG9kiqSUX_W1umPFSYAksvIW51HEQAu58t-MWNLqIGcM41kTeqA/exec";
+
+    const STORAGE_KEYS = {
+      AUTH: 'sakukelas_k1_session_v1',
+      PROGRESS: 'sakukelas_k1_progress_v1',
+      LAST_SYNC: 'sakukelas_k1_last_sync_v1',
+      CUSTOM: 'sakukelas_k1_custom_v1',
+      CLOUD: 'sakukelas_k1_cloud_v1',
+      LEGACY_CONTENT: 'sakukelas_k1_content_v11'
+    };
+    const CONTENT_VERSION = 13;
+
+    const ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
+
+    function esc(v) {
+      return String(v === null || v === undefined ? "" : v).replace(/[&<>"']/g, c => (
+        { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
+      ));
+    }
+    function safeHttpUrl(u) {
+      try {
+        const x = new URL(String(u));
+        return (x.protocol === "https:" || x.protocol === "http:") ? x.href : "";
+      } catch (e) { return ""; }
+    }
+    function str(v, max) {
+      const t = typeof v === "string" ? v : (typeof v === "number" ? String(v) : "");
+      return t.slice(0, max || 4000);
+    }
+    function strList(v) {
+      return (Array.isArray(v) ? v : []).slice(0, 40).map(x => str(x, 2000)).filter(Boolean);
+    }
+    function normalizeMateri(m) {
+      if (!m || typeof m !== "object" || typeof m.id !== "string" || !ID_RE.test(m.id)) return null;
+      const bab = str(m.bab, 300).trim();
+      const mapel = str(m.mapel, 80).trim();
+      if (!bab || !mapel) return null;
+      return {
+        id: m.id,
+        semester: Number(m.semester) === 2 ? 2 : 1,
+        kurikulum: str(m.kurikulum, 200),
+        kelas: Number(m.kelas) || 1,
+        mapel: mapel,
+        bab: bab,
+        deskripsi: str(m.deskripsi, 600),
+        ringkasan_intro: str(m.ringkasan_intro, 4000),
+        poin_penting: (Array.isArray(m.poin_penting) ? m.poin_penting : []).slice(0, 20)
+          .map(p => ({ judul: str(p && p.judul, 300), isi: str(p && p.isi, 2000) }))
+          .filter(p => p.judul || p.isi),
+        cara_biasa_judul: str(m.cara_biasa_judul, 300),
+        cara_biasa_langkah: strList(m.cara_biasa_langkah),
+        cara_cepat_judul: str(m.cara_cepat_judul, 300),
+        cara_cepat_langkah: strList(m.cara_cepat_langkah),
+        visual_type: /^[a-z0-9_]{1,40}$/.test(m.visual_type || "") ? m.visual_type : "point_cards",
+        visual_caption: str(m.visual_caption, 400),
+        video_judul: str(m.video_judul, 300),
+        video_durasi: str(m.video_durasi, 80),
+        video_url: safeHttpUrl(m.video_url)
+      };
+    }
+    function normalizeSoal(q) {
+      if (!q || typeof q !== "object") return null;
+      if (typeof q.id !== "string" || !ID_RE.test(q.id)) return null;
+      if (typeof q.materi_id !== "string" || !ID_RE.test(q.materi_id)) return null;
+      const question = str(q.question, 600).trim();
+      const o = [q.correct_answer, q.wrong_answer_1, q.wrong_answer_2, q.wrong_answer_3].map(x => str(x, 300).trim());
+      if (!question || o.some(x => !x) || new Set(o).size < 4) return null;
+      return {
+        id: q.id, materi_id: q.materi_id, question: question,
+        correct_answer: o[0], wrong_answer_1: o[1], wrong_answer_2: o[2], wrong_answer_3: o[3],
+        explanation_normal: str(q.explanation_normal, 1500),
+        explanation_fast_trick: str(q.explanation_fast_trick, 1500)
+      };
+    }
+    function normalizeData(d) {
+      const mSeen = new Set(), sSeen = new Set();
+      const materi = (Array.isArray(d && d.materi) ? d.materi : []).slice(0, 500)
+        .map(normalizeMateri).filter(m => m && !mSeen.has(m.id) && mSeen.add(m.id));
+      // Limit dinaikkan ke 10.000 soal agar muat 100+ soal per bab
+      const soal = (Array.isArray(d && d.soal) ? d.soal : []).slice(0, 10000)
+        .map(normalizeSoal).filter(q => q && !sSeen.has(q.id) && sSeen.add(q.id));
+      return { materi: materi, soal: soal };
+    }
+
+    function readJson(key) {
+      try { const r = localStorage.getItem(key); return r ? JSON.parse(r) : null; } catch (e) { return null; }
+    }
+    function safeSet(key, val) {
+      try { localStorage.setItem(key, val); return true; }
+      catch (e) { showToast("Gagal menyimpan: memori browser penuh atau diblokir."); return false; }
+    }
+
+    /**
+     * =====================================================================
+     * 2. DATABASE LENGKAP KELAS 1 (SEMESTER 1 & SEMESTER 2)
+     * =====================================================================
+     */
+        // Hanya 2 bab contoh yang ikut tertanam di HTML (publik). Seluruh materi & soal lain
+    // diambil dari Google Sheet lewat API bertoken setelah login, lalu disimpan di HP.
+    const DEFAULT_DATA = {
+      "materi": [
+        {
+          "id": "PPKN-S1-01",
+          "semester": 1,
+          "kurikulum": "Buku Pendidikan Pancasila Kemdikbud",
+          "kelas": 1,
+          "mapel": "Pendidikan Pancasila",
+          "bab": "Bab 1: Aku Cinta Pancasila (Simbol & Sila Garuda Pancasila)",
+          "deskripsi": "Mengenal lambang negara Garuda Pancasila, 5 simbol perisai, serta bunyi dan penerapan sila 1–5.",
+          "ringkasan_intro": "Di Bab 1 Pendidikan Pancasila Kelas 1, kita mengenal lambang negara Indonesia yaitu Garuda Pancasila. Di dadanya terdapat perisai berisi 5 simbol yang melambangkan 5 sila Pancasila.",
+          "poin_penting": [
+            {
+              "judul": "Sila 1 & Sila 2 (Bintang & Rantai)",
+              "isi": "Sila 1: Ketuhanan Yang Maha Esa (Simbol: Bintang Emas — rajin beribadah & berdoa). Sila 2: Kemanusiaan yang Adil dan Beradab (Simbol: Rantai Emas — saling menyayangi & menolong teman)."
+            },
+            {
+              "judul": "Sila 3 (Pohon Beringin)",
+              "isi": "Persatuan Indonesia (Simbol: Pohon Beringin — hidup rukun bersama teman walau berbeda suku dan agama)."
+            },
+            {
+              "judul": "Sila 4 & Sila 5 (Kepala Banteng & Padi Kapas)",
+              "isi": "Sila 4: Kerakyatan yang Dipimpin oleh Hikmat Kebijaksanaan dalam Permusyawaratan/Perwakilan (Simbol: Kepala Banteng — bermusyawarah). Sila 5: Keadilan Sosial bagi Seluruh Rakyat Indonesia (Simbol: Padi dan Kapas — bersikap adil & suka berbagi)."
+            }
+          ],
+          "cara_biasa_judul": "Cara Biasa (Membaca Teks 5 Sila di Buku)",
+          "cara_biasa_langkah": [
+            "Membaca bunyi Pancasila nomor 1 sampai 5 dan melihat gambar perisai di buku siswa."
+          ],
+          "cara_cepat_judul": "Jembatan Keledai: '5 Simbol = Bin - Ran - Po - Ban - PaKa' ⚡",
+          "cara_cepat_langkah": [
+            "1. BINtang (Berdoa) | 2. RANtai (Menolong) | 3. POhon Beringin (Rukun) | 4. BANteng (Musyawarah) | 5. PAdi & KApas (Adil & Berbagi)!"
+          ],
+          "visual_type": "pancasila_symbols",
+          "visual_caption": "Ketuk tombol Sila 1 sampai 5 di bawah untuk melihat simbol perisai, bunyi sila, dan contoh sikapnya!",
+          "video_judul": "Pendidikan Pancasila Kelas 1 Bab 1: Aku Cinta Pancasila",
+          "video_durasi": "4 Menit • Hemat Data",
+          "video_url": "https://www.youtube.com/results?search_query=pendidikan+pancasila+kelas+1+bab+1+aku+cinta+pancasila+kurikulum+merdeka"
+        },
+        {
+          "id": "MAT-S1-01",
+          "semester": 1,
+          "kurikulum": "Buku Matematika Kemdikbud",
+          "kelas": 1,
+          "mapel": "Matematika",
+          "bab": "Bab 1: Ayo Membilang Sampai dengan 10",
+          "deskripsi": "Menghitung banyak benda 1–10, membaca lambang bilangan, serta membandingkan lebih banyak dan lebih sedikit.",
+          "ringkasan_intro": "Di Bab 1 Matematika Kelas 1, kita belajar membilang banyak benda dari 1 sampai 10, mengenal angka 0 (nol = kosong), serta membandingkan dua kelompok benda.",
+          "poin_penting": [
+            {
+              "judul": "Lambang & Nama Bilangan 1–10",
+              "isi": "1 (satu), 2 (dua), 3 (tiga), 4 (empat), 5 (lima), 6 (enam), 7 (tujuh), 8 (delapan), 9 (sembilan), 10 (sepuluh)."
+            },
+            {
+              "judul": "Membandingkan Benda",
+              "isi": "Gunakan kata 'lebih banyak dari', 'lebih sedikit dari', atau 'sama banyak dengan'."
+            }
+          ],
+          "cara_biasa_judul": "Cara Biasa (Menunjuk Satu per Satu)",
+          "cara_biasa_langkah": [
+            "Menunjuk setiap gambar benda dari kiri ke kanan sambil mengucapkan 1, 2, 3..."
+          ],
+          "cara_cepat_judul": "Trik Jitu: 'Tandai yang Sudah Dihitung!' ⚡",
+          "cara_cepat_langkah": [
+            "Beri tanda coret kecil pada gambar yang sudah dihitung agar tidak terhitung dua kali!"
+          ],
+          "visual_type": "counting_apples",
+          "visual_caption": "Ketuk tombol +1 atau -1 untuk berlatih membilang apel 1 sampai 10!",
+          "video_judul": "Matematika Kelas 1 Bab 1: Membilang Sampai 10",
+          "video_durasi": "4 Menit • Hemat Data",
+          "video_url": "https://www.youtube.com/results?search_query=matematika+kelas+1+bab+1+membilang+sampai+10"
+        }
+      ],
+      "soal": [
+        {
+          "id": "Q-PPKN1-01",
+          "materi_id": "PPKN-S1-01",
+          "question": "Apakah simbol sila ke-1 Pancasila ('Ketuhanan Yang Maha Esa') pada perisai Garuda Pancasila?",
+          "correct_answer": "Bintang Emas",
+          "wrong_answer_1": "Rantai Emas",
+          "wrong_answer_2": "Pohon Beringin",
+          "wrong_answer_3": "Kepala Banteng",
+          "explanation_normal": "Sila pertama Pancasila berbunyi 'Ketuhanan Yang Maha Esa' dilambangkan dengan Bintang Emas.",
+          "explanation_fast_trick": "Ingat urutan Bin-Ran-Po-Ban-PaKa: Nomor 1 adalah BINtang!"
+        },
+        {
+          "id": "Q-MAT1-01",
+          "materi_id": "MAT-S1-01",
+          "question": "Lambang bilangan untuk nama bilangan 'delapan' adalah ...",
+          "correct_answer": "8",
+          "wrong_answer_1": "6",
+          "wrong_answer_2": "7",
+          "wrong_answer_3": "9",
+          "explanation_normal": "Urutan lambang bilangan: 6 (enam), 7 (tujuh), 8 (delapan), 9 (sembilan).",
+          "explanation_fast_trick": "Angka 8 bentuknya seperti dua lingkaran bertumpuk!"
+        }
+      ]
+    };
+
+    /**
+     * =====================================================================
+     * 3. STATE APLIKASI, AUTH PEMBELI & SINKRONISASI CLOUD
+     * =====================================================================
+     */
+    let appData = { materi: [], soal: [] };
+    let baseData = { materi: [], soal: [] };
+    let customData = { materi: [], soal: [] };
+    let userProgress = { completed: [], scores: {}, mastered: [] };
+    let currentUser = null;
+
+    let state = {
+      selectedSemester: 1,
+      selectedMapel: "SEMUA",
+      activeMateriId: null,
+      activeTab: "ringkasan",
+      quiz: {
+        questions: [],
+        totalBankCount: 0,
+        masteredCount: 0,
+        currentIndex: 0,
+        scoreCount: 0,
+        answered: false,
+        selectedOption: null,
+        finished: false
+      },
+      visualState: {
+        appleCount: 6,
+        deckIdx: 0,
+        pictoApples: 4,
+        pictoBananas: 2,
+        pictoOranges: 5,
+        jariNumber: 7,
+        jariTens: 50,
+        comboTens: 30,
+        comboOnes: 7,
+        mulFactor9: 4,
+        divDividend9: 36,
+        pancasilaSila: 0,
+        pancasilaRuleLoc: 0,
+        pancasilaDivIdx: 0,
+        pancasilaGrIdx: 0,
+        pancasilaColorIdx: 0,
+        pancasilaHouseIdx: 0,
+        hijaiyahIndex: 0,
+        rukunImanIndex: 0,
+        wuduStepIndex: 0,
+        syllableIdx: 0
+      }
+    };
+
+    document.addEventListener("DOMContentLoaded", () => {
+      loadFromLocalStorageInstant();
+      const loggedIn = initAuthSession();
+      renderHome();
+      if (loggedIn) {
+        syncDataFromCloud(false);
+        flushProgress();
+      }
+      window.addEventListener("online", () => { flushProgress(); });
+    });
+
+    function isApiConfigured() {
+      return API_URL && API_URL.trim() !== "" && !API_URL.includes("PASTE_WEB_APP_URL");
+    }
+
+    function checkAdminMode() {
+      const params = new URLSearchParams(window.location.search);
+      if (params.get("admin") === "1") {
+        const btn = document.getElementById("btn-admin-studio");
+        if (btn) {
+          btn.classList.remove("hidden");
+          btn.classList.add("flex");
+        }
+      }
+    }
+
+    function getUserProgressKey() {
+      return currentUser ? `sakukelas_k1_progress_${currentUser.user_id}` : STORAGE_KEYS.PROGRESS;
+    }
+
+    function initAuthSession() {
+      checkAdminMode();
+      const savedSession = readJson(STORAGE_KEYS.AUTH);
+      if (savedSession && savedSession.user_id && isApiConfigured() && !savedSession.token) {
+        // sesi lama tanpa token (versi sebelumnya): wajib masuk ulang
+        try { localStorage.removeItem(STORAGE_KEYS.AUTH); } catch (e) {}
+      } else if (savedSession && savedSession.user_id) {
+        currentUser = savedSession;
+        applyLoggedInUI();
+        return true;
+      }
+      document.getElementById("login-gate").classList.remove("hidden");
+      return false;
+    }
+
+    function applyLoggedInUI() {
+      document.getElementById("login-gate").classList.add("hidden");
+      document.getElementById("btn-logout").classList.remove("hidden");
+      const heroTitle = document.getElementById("hero-greeting");
+      if (heroTitle && currentUser && currentUser.nama_anak) {
+        heroTitle.textContent = `Halo, ${currentUser.nama_anak}! 👋`;
+      }
+      const p = readJson(getUserProgressKey());
+      userProgress = cleanProgress(p);
+    }
+
+    async function apiPost(action, payload, timeoutMs) {
+      const ctrl = new AbortController();
+      const t = setTimeout(() => ctrl.abort(), timeoutMs || 12000);
+      try {
+        const res = await fetch(API_URL, {
+          method: "POST",
+          redirect: "follow",
+          cache: "no-store",
+          signal: ctrl.signal,
+          body: JSON.stringify(Object.assign({ action: action }, payload || {}))
+        });
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return await res.json();
+      } finally {
+        clearTimeout(t);
+      }
+    }
+
+    // ---------- Progres: gabung, jangan menimpa ----------
+    function cleanProgress(p) {
+      p = (p && typeof p === "object") ? p : {};
+      const ids = v => (Array.isArray(v) ? v : []).filter(x => typeof x === "string" && ID_RE.test(x));
+      const scores = {};
+      if (p.scores && typeof p.scores === "object") {
+        Object.keys(p.scores).forEach(k => {
+          const n = Number(p.scores[k]);
+          if (ID_RE.test(k) && Number.isFinite(n)) scores[k] = Math.max(0, Math.min(100, Math.round(n)));
+        });
+      }
+      return { completed: ids(p.completed), scores: scores, mastered: ids(p.mastered), removed: ids(p.removed) };
+    }
+
+    function mergeProgress(local, remote) {
+      const a = cleanProgress(local), b = cleanProgress(remote);
+      const removed = new Set(a.removed); // pembatalan "selesai" hanya datang dari perangkat ini
+      const scores = Object.assign({}, b.scores);
+      Object.keys(a.scores).forEach(k => { scores[k] = Math.max(scores[k] || 0, a.scores[k]); });
+      return {
+        completed: [...new Set([...b.completed, ...a.completed])].filter(id => !removed.has(id)),
+        scores: scores,
+        mastered: [...new Set([...b.mastered, ...a.mastered])],
+        removed: a.removed
+      };
+    }
+
+    function dirtyKey() { return getUserProgressKey() + "_dirty"; }
+    function setDirty(on) {
+      try { if (on) localStorage.setItem(dirtyKey(), "1"); else localStorage.removeItem(dirtyKey()); } catch (e) {}
+    }
+    function isDirty() { try { return localStorage.getItem(dirtyKey()) === "1"; } catch (e) { return false; } }
+
+    function handleSessionExpired(msg) {
+      try { localStorage.removeItem(STORAGE_KEYS.AUTH); } catch (e) {}
+      currentUser = null;
+      const btn = document.getElementById("btn-logout");
+      if (btn) btn.classList.add("hidden");
+      document.getElementById("login-gate").classList.remove("hidden");
+      const errBox = document.getElementById("login-error");
+      errBox.textContent = msg || "Sesi habis. Silakan masuk lagi.";
+      errBox.classList.remove("hidden");
+    }
+
+    async function handleLoginSubmit(e) {
+      e.preventDefault();
+      const kode = document.getElementById("login-kode").value.trim().toUpperCase();
+      const pin = document.getElementById("login-pin").value.trim();
+      const errBox = document.getElementById("login-error");
+      const btn = document.getElementById("btn-login-submit");
+
+      errBox.classList.add("hidden");
+      btn.disabled = true;
+      btn.textContent = "Memeriksa akun...";
+
+      if (!isApiConfigured()) {
+        currentUser = { user_id: `LOCAL-${kode}`, nama_anak: kode, kode_akses: kode };
+        safeSet(STORAGE_KEYS.AUTH, JSON.stringify(currentUser));
+        applyLoggedInUI();
+        renderHome();
+        btn.disabled = false;
+        btn.textContent = "Masuk & Mulai Belajar";
+        return;
+      }
+
+      try {
+        const data = await apiPost("login", { kode_akses: kode, pin: pin });
+        if (!data || !data.ok || !data.token) {
+          errBox.textContent = (data && data.error) || "Kode Akses atau PIN salah.";
+          errBox.classList.remove("hidden");
+        } else {
+          currentUser = Object.assign({}, data.user, { token: data.token });
+          safeSet(STORAGE_KEYS.AUTH, JSON.stringify(currentUser));
+          applyLoggedInUI(); // membaca progres lokal anak ini
+          // Gabungkan progres lokal (mungkin dikerjakan offline) dengan progres server.
+          userProgress = mergeProgress(userProgress, data.progress);
+          safeSet(getUserProgressKey(), JSON.stringify(userProgress));
+          setDirty(true);
+          flushProgress();
+          renderHome();
+          await syncDataFromCloud(false);
+          showToast(`Selamat belajar, ${currentUser.nama_anak}!`);
+        }
+      } catch (err) {
+        errBox.textContent = "Gagal terhubung ke server. Periksa koneksi internet kamu.";
+        errBox.classList.remove("hidden");
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Masuk & Mulai Belajar";
+      }
+    }
+
+    let logoutConfirmTimer = null;
+    function handleLogout() {
+      const btn = document.getElementById("btn-logout");
+      if (btn.dataset.confirming !== "1") {
+        btn.dataset.confirming = "1";
+        btn.textContent = "Yakin Keluar?";
+        logoutConfirmTimer = setTimeout(() => {
+          btn.dataset.confirming = "0";
+          btn.textContent = "Keluar";
+        }, 3000);
+        return;
+      }
+      clearTimeout(logoutConfirmTimer);
+      btn.dataset.confirming = "0";
+      btn.textContent = "Keluar";
+      try { localStorage.removeItem(STORAGE_KEYS.AUTH); } catch (e) {}
+      currentUser = null;
+      btn.classList.add("hidden");
+      document.getElementById("login-kode").value = "";
+      document.getElementById("login-pin").value = "";
+      document.getElementById("login-gate").classList.remove("hidden");
+    }
+
+    function persistProgress() {
+      safeSet(getUserProgressKey(), JSON.stringify(userProgress));
+      if (isApiConfigured() && currentUser) {
+        setDirty(true);
+        flushProgress();
+      }
+    }
+
+    let flushingProgress = false;
+    async function flushProgress() {
+      if (flushingProgress || !isApiConfigured() || !currentUser || !currentUser.token) return;
+      if (!navigator.onLine || !isDirty()) return;
+      flushingProgress = true;
+      let again = false;
+      try {
+        const sent = JSON.stringify(userProgress);
+        const data = await apiPost("saveProgress", { token: currentUser.token, progress: userProgress });
+        if (data && data.ok) {
+          const changedMeanwhile = JSON.stringify(userProgress) !== sent;
+          userProgress = mergeProgress(userProgress, data.progress);
+          if (!changedMeanwhile) { userProgress.removed = []; setDirty(false); } else { again = true; }
+          safeSet(getUserProgressKey(), JSON.stringify(userProgress));
+        } else if (data && data.code === "auth") {
+          handleSessionExpired(data.error);
+        }
+      } catch (err) {
+        // gagal/offline: tetap ditandai "dirty", dicoba lagi saat online atau app dibuka
+      } finally {
+        flushingProgress = false;
+      }
+      if (again) setTimeout(flushProgress, 0);
+    }
+
+    function rebuildAppData() {
+      const baseIds = new Set(baseData.materi.map(m => m.id));
+      const baseQ = new Set(baseData.soal.map(q => q.id));
+      appData = {
+        materi: [...customData.materi.filter(m => !baseIds.has(m.id)), ...baseData.materi],
+        soal: [...customData.soal.filter(q => !baseQ.has(q.id)), ...baseData.soal]
+      };
+    }
+
+    function saveCustom() {
+      return safeSet(STORAGE_KEYS.CUSTOM, JSON.stringify(customData));
+    }
+
+    function loadContent() {
+      baseData = normalizeData(DEFAULT_DATA);
+      const cloud = readJson(STORAGE_KEYS.CLOUD);
+      if (cloud && Array.isArray(cloud.materi)) {
+        const c = normalizeData(cloud);
+        if (c.materi.length > 0) baseData = c;
+      }
+      let custom = readJson(STORAGE_KEYS.CUSTOM);
+      if (!custom) {
+        custom = { materi: [], soal: [] };
+        safeSet(STORAGE_KEYS.CUSTOM, JSON.stringify(custom));
+      }
+      customData = normalizeData(custom);
+      rebuildAppData();
+    }
+
+    function loadFromLocalStorageInstant() {
+      try { loadContent(); }
+      catch (err) {
+        baseData = normalizeData(DEFAULT_DATA);
+        customData = { materi: [], soal: [] };
+        rebuildAppData();
+      }
+      updateSyncBadge("offline");
+    }
+
+    async function syncDataFromCloud(isManual) {
+      if (!isApiConfigured()) {
+        updateSyncBadge("offline");
+        if (isManual) showToast("Mode Offline aktif! Materi contoh sudah tersimpan di HP.");
+        return;
+      }
+      if (!currentUser || !currentUser.token) {
+        updateSyncBadge("offline");
+        if (isManual) showToast("Masuk dulu untuk memperbarui materi.");
+        return;
+      }
+
+      updateSyncBadge("syncing");
+      try {
+        const data = await apiPost("content", { token: currentUser.token }, 20000);
+        if (data && data.ok === false && data.code === "auth") {
+          updateSyncBadge("offline");
+          handleSessionExpired(data.error);
+          return;
+        }
+        const clean = (data && data.ok && Array.isArray(data.materi)) ? normalizeData(data) : null;
+        if (clean && clean.materi.length > 0) {
+          // Bab tanpa soal di Sheet tetap memakai soal bawaan (jika ada).
+          const have = new Set(clean.soal.map(q => q.materi_id));
+          const ids = new Set(clean.materi.map(m => m.id));
+          const extra = normalizeData(DEFAULT_DATA).soal.filter(q => !have.has(q.materi_id) && ids.has(q.materi_id));
+          clean.soal = [...clean.soal, ...extra];
+          baseData = clean;
+          safeSet(STORAGE_KEYS.CLOUD, JSON.stringify(clean));
+          rebuildAppData();
+          updateSyncBadge("synced");
+          renderHome();
+          if (isManual) showToast(`Berhasil sinkronisasi ${clean.materi.length} bab & ${clean.soal.length} soal!`);
+        } else {
+          updateSyncBadge("offline");
+          if (isManual) showToast("Server belum mengirim materi. Memakai data tersimpan di HP.");
+        }
+      } catch (err) {
+        updateSyncBadge("offline");
+        if (isManual) showToast("Sinyal lambat/offline. Memakai data tersimpan di HP.");
+      }
+    }
+
+    function updateSyncBadge(status) {
+      const badge = document.getElementById("sync-badge");
+      const dot = document.getElementById("sync-dot");
+      const text = document.getElementById("sync-text");
+      if (status === "syncing") {
+        badge.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-extrabold bg-amber-50 text-amber-800 border border-amber-200";
+        dot.className = "w-2 h-2 rounded-full bg-amber-500 animate-ping";
+        text.textContent = "Sinkron...";
+      } else if (status === "synced") {
+        badge.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-extrabold bg-sky-50 text-sky-700 border border-sky-200";
+        dot.className = "w-2 h-2 rounded-full bg-sky-500";
+        text.textContent = "Tersinkronisasi";
+      } else {
+        badge.className = "flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200";
+        dot.className = "w-2 h-2 rounded-full bg-emerald-500";
+        text.textContent = "Mode Offline";
+      }
+    }
+
+    function showToast(msg) {
+      document.getElementById("toast-message").textContent = msg;
+      document.getElementById("toast-banner").classList.remove("hidden");
+      setTimeout(() => hideToast(), 4000);
+    }
+
+    function hideToast() {
+      document.getElementById("toast-banner").classList.add("hidden");
+    }
+
+    /**
+     * =====================================================================
+     * 4. NAVIGASI BERANDA & FOLDER SEMESTER
+     * =====================================================================
+     */
+    function goHome() {
+      state.activeMateriId = null;
+      document.getElementById("view-study").classList.add("hidden");
+      document.getElementById("view-home").classList.remove("hidden");
+      renderHome();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function selectSemester(sem) {
+      state.selectedSemester = sem;
+      state.selectedMapel = "SEMUA";
+      renderHome();
+    }
+
+    function selectMapelFilter(mapel) {
+      state.selectedMapel = mapel;
+      renderHome();
+    }
+
+    function getSubjectTheme(mapel) {
+      const m = mapel.toLowerCase();
+      if (m.includes("pancasila") || m.includes("ppkn")) return { icon: "🦅", badgeBg: "bg-rose-100", badgeText: "text-rose-800" };
+      if (m.includes("jarimatika")) return { icon: "🖐️", badgeBg: "bg-indigo-100", badgeText: "text-indigo-800" };
+      if (m.includes("matematika")) return { icon: "📐", badgeBg: "bg-sky-100", badgeText: "text-sky-800" };
+      if (m.includes("agama") || m.includes("pai")) return { icon: "🕌", badgeBg: "bg-emerald-100", badgeText: "text-emerald-800" };
+      if (m.includes("inggris") || m.includes("english")) return { icon: "🔤", badgeBg: "bg-purple-100", badgeText: "text-purple-800" };
+      return { icon: "📘", badgeBg: "bg-amber-100", badgeText: "text-amber-800" };
+    }
+
+    function renderHome() {
+      const totalAll = appData.materi.length;
+      const doneAll = appData.materi.filter(m => userProgress.completed.includes(m.id)).length;
+      document.getElementById("home-progress-counter").textContent = `${doneAll} / ${totalAll}`;
+
+      const sem1List = appData.materi.filter(m => Number(m.semester || 1) === 1);
+      const sem2List = appData.materi.filter(m => Number(m.semester || 1) === 2);
+      document.getElementById("count-sem-1").textContent = sem1List.length;
+      document.getElementById("count-sem-2").textContent = sem2List.length;
+
+      const btnSem1 = document.getElementById("folder-sem-1");
+      const btnSem2 = document.getElementById("folder-sem-2");
+      if (state.selectedSemester === 1) {
+        btnSem1.className = "min-h-[76px] p-4 rounded-3xl border-2 border-amber-400 bg-amber-50 text-amber-950 text-left transition flex items-center gap-3.5 shadow-xs";
+        btnSem2.className = "min-h-[76px] p-4 rounded-3xl border-2 border-slate-200 bg-white text-slate-600 hover:border-emerald-300 text-left transition flex items-center gap-3.5";
+        document.getElementById("semester-heading").innerHTML = `<span>📁 Pelajaran Semester 1 (Ganjil)</span>`;
+      } else {
+        btnSem1.className = "min-h-[76px] p-4 rounded-3xl border-2 border-slate-200 bg-white text-slate-600 hover:border-amber-300 text-left transition flex items-center gap-3.5";
+        btnSem2.className = "min-h-[76px] p-4 rounded-3xl border-2 border-emerald-400 bg-emerald-50 text-emerald-950 text-left transition flex items-center gap-3.5 shadow-xs";
+        document.getElementById("semester-heading").innerHTML = `<span>📂 Pelajaran Semester 2 (Genap)</span>`;
+      }
+
+      const activeList = state.selectedSemester === 1 ? sem1List : sem2List;
+      const uniqueMapel = ["SEMUA", ...new Set(activeList.map(m => m.mapel))];
+
+      document.getElementById("subject-filter-pills").innerHTML = uniqueMapel.map(mp => {
+        const isActive = state.selectedMapel === mp;
+        const theme = mp === "SEMUA" ? { icon: "✨" } : getSubjectTheme(mp);
+        return `
+          <button data-mapel="${esc(mp)}" onclick="selectMapelFilter(this.dataset.mapel)"
+            class="min-h-[44px] px-4 py-2 rounded-2xl font-extrabold text-xs sm:text-sm whitespace-nowrap border-2 transition flex items-center gap-1.5 shrink-0 ${
+              isActive ? 'bg-sky-600 border-sky-600 text-white shadow-2xs' : 'bg-white border-slate-200 text-slate-700 hover:border-sky-300'
+            }">
+            <span>${theme.icon}</span>
+            <span>${mp === "SEMUA" ? "Semua Mapel" : esc(mp)}</span>
+          </button>
+        `;
+      }).join("");
+
+      const filtered = state.selectedMapel === "SEMUA" ? activeList : activeList.filter(m => m.mapel === state.selectedMapel);
+      const grouped = Object.create(null);
+      filtered.forEach(item => {
+        if (!grouped[item.mapel]) grouped[item.mapel] = [];
+        grouped[item.mapel].push(item);
+      });
+
+      const container = document.getElementById("chapters-container");
+      if (Object.keys(grouped).length === 0) {
+        container.innerHTML = `<div class="bg-white rounded-3xl p-8 text-center border border-slate-200 font-bold text-slate-500">Belum ada materi di folder ini.</div>`;
+        return;
+      }
+
+      const masteredSet = new Set(userProgress.mastered || []);
+
+      container.innerHTML = Object.entries(grouped).map(([mapel, chapters]) => {
+        const theme = getSubjectTheme(mapel);
+        const cardsHtml = chapters.map(chap => {
+          const isDone = userProgress.completed.includes(chap.id);
+          const bestScore = userProgress.scores[chap.id];
+          const chapQuestions = appData.soal.filter(s => s.materi_id === chap.id);
+          const qCount = chapQuestions.length;
+          const masteredCount = chapQuestions.filter(s => masteredSet.has(s.id)).length;
+
+          return `
+            <div onclick="openChapter('${esc(chap.id)}')"
+              class="group cursor-pointer bg-white rounded-3xl p-4 sm:p-5 border-2 border-slate-200/80 hover:border-sky-400 active:scale-99 transition shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div class="space-y-1.5">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="px-2.5 py-0.5 rounded-lg text-xs font-extrabold ${theme.badgeBg} ${theme.badgeText}">${esc(chap.mapel)}</span>
+                  ${isDone ? `<span class="px-2.5 py-0.5 rounded-lg text-xs font-extrabold bg-emerald-100 text-emerald-800">✅ Selesai</span>` : ``}
+                  ${Number.isFinite(Number(bestScore)) && bestScore !== undefined ? `<span class="px-2.5 py-0.5 rounded-lg text-xs font-extrabold bg-amber-100 text-amber-800">⭐ Skor: ${Number(bestScore)}%</span>` : ``}
+                </div>
+                <h3 class="text-lg font-black text-slate-800 group-hover:text-sky-700 transition leading-snug">${esc(chap.bab)}</h3>
+                <p class="text-sm text-slate-500 font-medium line-clamp-2">${esc(chap.deskripsi)}</p>
+              </div>
+              <div class="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 border-t sm:border-t-0 border-slate-100">
+                <span class="text-xs font-bold text-slate-400">${masteredCount}/${qCount} Soal Dikuasai</span>
+                <span class="min-h-[46px] px-4 py-2.5 rounded-2xl bg-sky-50 group-hover:bg-sky-600 text-sky-700 group-hover:text-white font-extrabold text-sm flex items-center gap-1 transition">
+                  <span>Belajar</span><span>→</span>
+                </span>
+              </div>
+            </div>
+          `;
+        }).join("");
+
+        return `
+          <div class="space-y-3">
+            <div class="flex items-center gap-2 px-1">
+              <span class="text-xl">${theme.icon}</span>
+              <h3 class="font-black text-base text-slate-700 uppercase tracking-wide">${esc(mapel)}</h3>
+            </div>
+            <div class="space-y-3">${cardsHtml}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    /**
+     * =====================================================================
+     * 5. RUANG BELAJAR (4 TAB) & ALAT PERAGA INTERAKTIF
+     * =====================================================================
+     */
+    function openChapter(materiId) {
+      const chap = appData.materi.find(m => m.id === materiId);
+      if (!chap) return;
+      state.activeMateriId = materiId;
+      state.activeTab = "ringkasan";
+      state.visualState.deckIdx = 0;
+
+      document.getElementById("study-badge-sem").textContent = `Semester ${chap.semester || 1}`;
+      document.getElementById("study-badge-mapel").textContent = chap.mapel;
+      document.getElementById("study-chapter-title").textContent = chap.bab;
+      updateCompleteButtonUI();
+
+      document.getElementById("view-home").classList.add("hidden");
+      document.getElementById("view-study").classList.remove("hidden");
+      switchStudyTab("ringkasan");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function toggleChapterComplete() {
+      const id = state.activeMateriId;
+      if (!id) return;
+      const idx = userProgress.completed.indexOf(id);
+      if (idx === -1) {
+        userProgress.completed.push(id);
+        userProgress.removed = (userProgress.removed || []).filter(x => x !== id);
+        showToast("Hebat! Bab ditandai selesai ⭐");
+      } else {
+        userProgress.completed.splice(idx, 1);
+        userProgress.removed = [...new Set([...(userProgress.removed || []), id])];
+      }
+      persistProgress();
+      updateCompleteButtonUI();
+    }
+
+    function updateCompleteButtonUI() {
+      const isDone = userProgress.completed.includes(state.activeMateriId);
+      const btn = document.getElementById("btn-mark-done");
+      if (isDone) {
+        btn.className = "min-h-[48px] px-4 py-2.5 rounded-2xl font-extrabold text-sm border-2 border-emerald-500 bg-emerald-50 text-emerald-800 transition flex items-center justify-center gap-2 shrink-0";
+        document.getElementById("mark-done-icon").textContent = "✅";
+        document.getElementById("mark-done-text").textContent = "Sudah Dipelajari";
+      } else {
+        btn.className = "min-h-[48px] px-4 py-2.5 rounded-2xl font-extrabold text-sm border-2 border-slate-200 bg-white text-slate-700 hover:border-emerald-400 transition flex items-center justify-center gap-2 shrink-0";
+        document.getElementById("mark-done-icon").textContent = "⬜";
+        document.getElementById("mark-done-text").textContent = "Tandai Selesai";
+      }
+    }
+
+    function switchStudyTab(tabName) {
+      state.activeTab = tabName;
+      ["ringkasan", "caracepat", "visual", "latihan"].forEach(t => {
+        const btn = document.getElementById(`tab-btn-${t}`);
+        btn.className = t === tabName
+          ? "min-h-[48px] px-3 py-2.5 rounded-2xl font-extrabold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition bg-white text-sky-700 shadow-xs"
+          : "min-h-[48px] px-3 py-2.5 rounded-2xl font-extrabold text-xs sm:text-sm flex items-center justify-center gap-1.5 transition text-slate-600 hover:text-slate-900";
+      });
+
+      const chap = appData.materi.find(m => m.id === state.activeMateriId);
+      const container = document.getElementById("study-tab-content");
+
+      if (tabName === "ringkasan") {
+        const colors = [
+          { bg: "bg-sky-50/90", border: "border-sky-200", title: "text-sky-900", badge: "bg-sky-200/70 text-sky-900" },
+          { bg: "bg-amber-50/90", border: "border-amber-200", title: "text-amber-900", badge: "bg-amber-200/70 text-amber-900" },
+          { bg: "bg-emerald-50/90", border: "border-emerald-200", title: "text-emerald-900", badge: "bg-emerald-200/70 text-emerald-900" }
+        ];
+        container.innerHTML = `
+          <div class="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 shadow-2xs space-y-5">
+            <p class="text-base sm:text-lg text-slate-700 font-semibold leading-relaxed">${esc(chap.ringkasan_intro)}</p>
+            <div class="space-y-3.5">
+              ${(chap.poin_penting || []).map((p, idx) => {
+                const c = colors[idx % colors.length];
+                return `
+                  <div class="${c.bg} border-2 ${c.border} rounded-2xl p-4 sm:p-5 space-y-1.5">
+                    <span class="inline-block px-2.5 py-0.5 rounded-lg text-xs font-extrabold ${c.badge}">Poin Penting #${idx + 1}</span>
+                    <h3 class="text-lg font-black ${c.title}">${esc(p.judul)}</h3>
+                    <p class="text-base text-slate-700 font-semibold leading-relaxed">${esc(p.isi)}</p>
+                  </div>
+                `;
+              }).join("")}
+            </div>
+            <div class="pt-2 flex justify-end">
+              <button onclick="switchStudyTab('caracepat')" class="min-h-[48px] px-5 py-3 rounded-2xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-sm">
+                Lanjut ke Cara Cepat ⚡ →
+              </button>
+            </div>
+          </div>
+        `;
+      } else if (tabName === "caracepat") {
+        container.innerHTML = `
+          <div class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div class="bg-white rounded-3xl p-5 sm:p-6 border-2 border-slate-200 space-y-3">
+                <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-700 text-xs font-extrabold">🐢 CARA BIASA</span>
+                <h3 class="text-lg font-black text-slate-800">${esc(chap.cara_biasa_judul)}</h3>
+                <ul class="space-y-2 text-base font-semibold text-slate-700">
+                  ${(chap.cara_biasa_langkah || []).map(l => `<li>• ${esc(l)}</li>`).join("")}
+                </ul>
+              </div>
+              <div class="bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 rounded-3xl p-5 sm:p-6 border-2 border-amber-300 space-y-3">
+                <span class="px-3 py-1 rounded-full bg-amber-400 text-amber-950 text-xs font-black">⚡ TRIK CARA CEPAT</span>
+                <h3 class="text-lg font-black text-amber-950">${esc(chap.cara_cepat_judul)}</h3>
+                <ul class="space-y-2 text-base font-bold text-slate-800">
+                  ${(chap.cara_cepat_langkah || []).map(l => `<li>⚡ ${esc(l)}</li>`).join("")}
+                </ul>
+              </div>
+            </div>
+            <div class="flex justify-end">
+              <button onclick="switchStudyTab('visual')" class="min-h-[48px] px-5 py-3 rounded-2xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-sm">
+                Lihat Alat Peraga & Video 🎨 →
+              </button>
+            </div>
+          </div>
+        `;
+      } else if (tabName === "visual") {
+        container.innerHTML = `
+          <div class="space-y-5">
+            <div class="bg-white rounded-3xl p-5 sm:p-6 border border-slate-200/90 space-y-4">
+              <h3 class="text-lg font-black text-slate-800">🎨 Alat Peraga Interaktif</h3>
+              <div id="interactive-svg-container" class="bg-slate-50 rounded-2xl p-4 sm:p-6 border border-slate-200/80 flex flex-col items-center justify-center">
+                ${getInteractiveSvgHtml(chap.visual_type)}
+              </div>
+              <p class="text-sm text-center font-bold text-slate-500">${hasVisualHandler(chap.visual_type) ? esc(chap.visual_caption || "") : "Ketuk panah untuk membaca poin penting bab ini satu per satu."}</p>
+            </div>
+
+            <div class="bg-gradient-to-r from-rose-50 to-orange-50 rounded-3xl p-5 sm:p-6 border-2 border-rose-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <span class="px-2.5 py-0.5 rounded-lg bg-rose-100 text-rose-700 text-xs font-extrabold">📺 VIDEO PENDAMPING</span>
+                <h4 class="text-lg font-black text-slate-800 mt-1">${esc(chap.video_judul)}</h4>
+                <p class="text-xs font-bold text-slate-500">${String(chap.video_url || "").includes("search_query") ? "Perlu internet • membuka hasil pencarian YouTube" : esc(chap.video_durasi)}</p>
+              </div>
+              ${chap.video_url ? `<a href="${esc(chap.video_url)}" target="_blank" rel="noopener noreferrer"
+                class="min-h-[48px] w-full sm:w-auto px-5 py-3 rounded-2xl bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-sm flex items-center justify-center gap-2 shrink-0">
+                <span>▶ Cari Video di YouTube</span>
+              </a>` : ``}
+            </div>
+
+            <div class="flex justify-end">
+              <button onclick="switchStudyTab('latihan')" class="min-h-[48px] px-5 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-sm">
+                Mulai Latihan Soal 🎯 →
+              </button>
+            </div>
+          </div>
+        `;
+      } else if (tabName === "latihan") {
+        startQuizForChapter(chap.id);
+      }
+    }
+
+    function setVisualProp(key, val) {
+      state.visualState[key] = val;
+      const chap = appData.materi.find(m => m.id === state.activeMateriId);
+      const box = document.getElementById("interactive-svg-container");
+      if (chap && box) box.innerHTML = getInteractiveSvgHtml(chap.visual_type);
+    }
+
+    const VISUALS_WITH_HANDLER = new Set([
+      "pancasila_colors", "pancasila_house_map", "pancasila_symbols", "pancasila_rules",
+      "pancasila_diversity", "pancasila_gotong_royong", "jarimatika_hand", "jarimatika_tens",
+      "jarimatika_combo", "jarimatika_mul9", "jarimatika_div9", "pictograph_fruits", "shapes_2d",
+      "measure_length", "pai_hijaiyah", "pai_rukun_iman", "pai_wudu", "syllable_builder",
+      "magic_words", "counting_apples"
+    ]);
+    function hasVisualHandler(t) {
+      return VISUALS_WITH_HANDLER.has(t) || Object.prototype.hasOwnProperty.call(VOCAB_SETS, t);
+    }
+
+    const VOCAB_SETS = {
+      english_greetings: { title: "Greetings • Sapaan", items: [
+        { e: "🌅", en: "Good morning", id: "Selamat pagi", ex: "Dipakai di pagi hari." },
+        { e: "☀️", en: "Good afternoon", id: "Selamat siang / sore", ex: "Dipakai setelah tengah hari." },
+        { e: "🌇", en: "Good evening", id: "Selamat sore / malam", ex: "Dipakai menjelang malam." },
+        { e: "🌙", en: "Good night", id: "Selamat malam", ex: "Dipakai sebelum tidur." },
+        { e: "👋", en: "Hello", id: "Halo" },
+        { e: "🤝", en: "Goodbye", id: "Sampai jumpa" },
+        { e: "🙂", en: "My name is ...", id: "Namaku ...", ex: "Isi titik dengan namamu." },
+        { e: "❓", en: "What is your name?", id: "Siapa namamu?" }
+      ] },
+      english_numbers: { title: "Numbers • Angka", items: [
+        { e: "1", en: "one", id: "satu" }, { e: "2", en: "two", id: "dua" }, { e: "3", en: "three", id: "tiga" },
+        { e: "4", en: "four", id: "empat" }, { e: "5", en: "five", id: "lima" }, { e: "6", en: "six", id: "enam" },
+        { e: "7", en: "seven", id: "tujuh" }, { e: "8", en: "eight", id: "delapan" }, { e: "9", en: "nine", id: "sembilan" },
+        { e: "10", en: "ten", id: "sepuluh" }
+      ] },
+      english_classroom: { title: "Classroom Objects • Benda di Kelas", items: [
+        { e: "📕", en: "book", id: "buku" }, { e: "✏️", en: "pencil", id: "pensil" }, { e: "🖊️", en: "pen", id: "pulpen" },
+        { e: "📏", en: "ruler", id: "penggaris" }, { e: "⬜", en: "eraser", id: "penghapus" }, { e: "🎒", en: "bag", id: "tas" },
+        { e: "🪑", en: "chair", id: "kursi" }, { e: "✂️", en: "scissors", id: "gunting" }, { e: "📋", en: "board", id: "papan tulis" }
+      ] },
+      english_colors: { title: "Colors & Shapes • Warna & Bentuk", items: [
+        { hex: "#EF4444", en: "red", id: "merah" }, { hex: "#FACC15", en: "yellow", id: "kuning" },
+        { hex: "#3B82F6", en: "blue", id: "biru" }, { hex: "#22C55E", en: "green", id: "hijau" },
+        { hex: "#F97316", en: "orange", id: "oranye" }, { hex: "#1E293B", en: "black", id: "hitam" },
+        { hex: "#F8FAFC", en: "white", id: "putih" }, { hex: "#EC4899", en: "pink", id: "merah muda" },
+        { hex: "#A855F7", en: "purple", id: "ungu" }, { hex: "#92400E", en: "brown", id: "cokelat" },
+        { e: "⭕", en: "circle", id: "lingkaran" }, { e: "🟦", en: "square", id: "persegi" },
+        { e: "🔺", en: "triangle", id: "segitiga" }, { e: "▬", en: "rectangle", id: "persegi panjang" }
+      ] },
+      english_animals: { title: "Farm Animals • Hewan di Peternakan", items: [
+        { e: "🐱", en: "cat", id: "kucing" }, { e: "🐶", en: "dog", id: "anjing" }, { e: "🐄", en: "cow", id: "sapi" },
+        { e: "🐔", en: "chicken", id: "ayam" }, { e: "🦆", en: "duck", id: "bebek" }, { e: "🐐", en: "goat", id: "kambing" },
+        { e: "🐴", en: "horse", id: "kuda" }, { e: "🐑", en: "sheep", id: "domba" }
+      ] },
+      english_family: { title: "My Family • Keluargaku", items: [
+        { e: "👨", en: "father", id: "ayah", ex: "He is my father." },
+        { e: "👩", en: "mother", id: "ibu", ex: "She is my mother." },
+        { e: "👦", en: "brother", id: "saudara laki-laki", ex: "He is my brother." },
+        { e: "👧", en: "sister", id: "saudara perempuan", ex: "She is my sister." },
+        { e: "👴", en: "grandfather", id: "kakek", ex: "He is my grandfather." },
+        { e: "👵", en: "grandmother", id: "nenek", ex: "She is my grandmother." }
+      ] },
+      english_fruits: { title: "Fruits • Buah-buahan", items: [
+        { e: "🍎", en: "apple", id: "apel", ex: "I like apples." }, { e: "🍌", en: "banana", id: "pisang", ex: "I like bananas." },
+        { e: "🍊", en: "orange", id: "jeruk", ex: "I like oranges." }, { e: "🥭", en: "mango", id: "mangga", ex: "I like mangoes." },
+        { e: "🍇", en: "grape", id: "anggur", ex: "I like grapes." }, { e: "🍉", en: "watermelon", id: "semangka", ex: "I like watermelon." },
+        { e: "🍓", en: "strawberry", id: "stroberi", ex: "I like strawberries." }, { e: "🍍", en: "pineapple", id: "nanas", ex: "I like pineapple." }
+      ] }
+    };
+
+    function getVocabDeckHtml(type) {
+      const set = VOCAB_SETS[type];
+      const key = "vocab_" + type;
+      const n = set.items.length;
+      const idx = (((state.visualState[key] || 0) % n) + n) % n;
+      const cur = set.items[idx];
+      const face = cur.hex
+        ? `<div class="w-24 h-24 rounded-full border-4 border-white shadow-md mx-auto" style="background-color:${cur.hex}"></div>`
+        : `<div class="text-6xl leading-none">${cur.e}</div>`;
+      return `
+        <div class="flex flex-col items-center space-y-4 w-full">
+          <span class="px-3 py-1 rounded-full bg-purple-100 text-purple-800 font-black text-xs">${set.title}</span>
+          <div class="bg-white border-2 border-purple-200 rounded-3xl p-5 text-center max-w-md w-full space-y-2">
+            ${face}
+            <div class="text-3xl font-black text-slate-800">${cur.en}</div>
+            <div class="text-sm font-bold text-slate-500">Artinya: ${cur.id}</div>
+            ${cur.ex ? `<div class="text-sm font-bold text-purple-700">${cur.ex}</div>` : ``}
+          </div>
+          <div class="flex items-center gap-3">
+            <button onclick="setVisualProp('${key}', ${idx - 1})" aria-label="Sebelumnya" class="min-h-[46px] min-w-[46px] px-4 py-2 rounded-2xl bg-slate-200 text-slate-700 font-black text-sm">←</button>
+            <span class="text-xs font-extrabold text-slate-500">${idx + 1} / ${n}</span>
+            <button onclick="setVisualProp('${key}', ${idx + 1})" aria-label="Berikutnya" class="min-h-[46px] min-w-[46px] px-4 py-2 rounded-2xl bg-purple-600 text-white font-black text-sm">→</button>
+          </div>
+          <div class="flex flex-wrap justify-center gap-2">
+            ${set.items.map((it, i) => `
+              <button onclick="setVisualProp('${key}', ${i})"
+                class="min-h-[40px] px-3 py-1.5 rounded-xl font-extrabold text-xs border-2 ${i === idx ? 'bg-purple-600 text-white border-purple-700' : 'bg-white text-slate-700 border-slate-200'}">${it.en}</button>
+            `).join("")}
+          </div>
+        </div>
+      `;
+    }
+
+    function getPointDeckHtml() {
+      const chap = appData.materi.find(m => m.id === state.activeMateriId);
+      const pts = (chap && chap.poin_penting) || [];
+      if (pts.length === 0) {
+        return `<div class="text-center font-bold text-slate-500 p-4">Bab ini belum punya alat peraga. Baca ringkasan dan cara cepat dulu ya!</div>`;
+      }
+      const n = pts.length;
+      const idx = (((state.visualState.deckIdx || 0) % n) + n) % n;
+      const p = pts[idx];
+      return `
+        <div class="flex flex-col items-center space-y-4 w-full">
+          <div class="bg-white border-2 border-sky-200 rounded-3xl p-5 text-left max-w-md w-full space-y-2">
+            <span class="inline-block px-2.5 py-0.5 rounded-lg bg-sky-100 text-sky-800 text-xs font-extrabold">Poin ${idx + 1} dari ${n}</span>
+            <h4 class="text-lg font-black text-slate-800">${esc(p.judul)}</h4>
+            <p class="text-base font-semibold text-slate-700 leading-relaxed">${esc(p.isi)}</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <button onclick="setVisualProp('deckIdx', ${idx - 1})" aria-label="Sebelumnya" class="min-h-[46px] min-w-[46px] px-4 py-2 rounded-2xl bg-slate-200 text-slate-700 font-black text-sm">←</button>
+            <button onclick="setVisualProp('deckIdx', ${idx + 1})" aria-label="Berikutnya" class="min-h-[46px] min-w-[46px] px-4 py-2 rounded-2xl bg-sky-600 text-white font-black text-sm">→</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function getInteractiveSvgHtml(visualType) {
+      if (visualType === "pancasila_colors") {
+        const parts = [
+          { part: "⭐ Tengah Perisai (Bintang)", color: "Hitam", hex: "#1E293B", meaning: "Melambangkan warna alam semesta dan cahaya Tuhan Yang Maha Esa." },
+          { part: "⛓️ & 🌾 Kiri Atas & Kanan Bawah", color: "Merah", hex: "#DC2626", meaning: "Melambangkan keberanian membela kebenaran (Rantai & Padi Kapas)." },
+          { part: "🌳 & 🐃 Kanan Atas & Kiri Bawah", color: "Putih", hex: "#F8FAFC", meaning: "Melambangkan kesucian, kebenaran, dan kemurnian (Pohon Beringin & Kepala Banteng)." },
+          { part: "🦅 Bulu Burung Garuda", color: "Kuning Emas", hex: "#F59E0B", meaning: "Melambangkan keagungan, kejayaan, dan keluhuran bangsa Indonesia." }
+        ];
+        const cur = parts[state.visualState.pancasilaColorIdx % parts.length];
+        return `
+          <div class="flex flex-col items-center space-y-4 w-full">
+            <div class="bg-white border-2 border-rose-200 rounded-3xl p-5 text-center max-w-md w-full space-y-2">
+              <div class="w-16 h-16 rounded-2xl mx-auto border-4 border-slate-300 shadow-xs" style="background-color: ${cur.hex}"></div>
+              <div class="text-base sm:text-lg font-black text-slate-900">${cur.part}</div>
+              <span class="inline-block px-3 py-0.5 rounded-full bg-rose-100 text-rose-800 font-black text-xs">Warna: ${cur.color}</span>
+              <p class="text-xs sm:text-sm font-bold text-slate-600">${cur.meaning}</p>
+            </div>
+            <div class="flex flex-wrap justify-center gap-2">
+              ${parts.map((p, idx) => `
+                <button onclick="setVisualProp('pancasilaColorIdx', ${idx})"
+                  class="min-h-[44px] px-3 py-2 rounded-2xl font-black text-xs border-2 transition ${
+                    state.visualState.pancasilaColorIdx === idx ? 'bg-rose-600 border-rose-700 text-white' : 'bg-white border-slate-200 text-slate-700'
+                  }">${p.color}</button>
+              `).join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      if (visualType === "pancasila_house_map") {
+        const rooms = [
+          { icon: "🛋️", name: "Ruang Tamu", desc: "Tempat menerima tamu dengan ramah dan sopan." },
+          { icon: "🛏️", name: "Kamar Tidur", desc: "Tempat beristirahat. Selalu rapikan bantal dan selimut saat bangun!" },
+          { icon: "🍳", name: "Dapur & Ruang Makan", desc: "Tempat Ibu memasak makanan bergizi. Jangan lupa berdoa sebelum makan!" },
+          { icon: "🏡", name: "Tetangga Sebelah Rumah", desc: "Sapa tetangga dengan senyuman ramah dan jaga kebersihan halaman bersama." }
+        ];
+        const cur = rooms[state.visualState.pancasilaHouseIdx % rooms.length];
+        return `
+          <div class="flex flex-col items-center space-y-4 w-full">
+            <div class="bg-amber-50 border-2 border-amber-300 rounded-3xl p-5 text-center max-w-md w-full">
+              <div class="text-4xl mb-1">${cur.icon}</div>
+              <div class="text-lg font-black text-amber-950">${cur.name}</div>
+              <p class="text-sm font-bold text-slate-700 mt-1.5">${cur.desc}</p>
+            </div>
+            <div class="flex flex-wrap justify-center gap-2">
+              ${rooms.map((r, idx) => `
+                <button onclick="setVisualProp('pancasilaHouseIdx', ${idx})"
+                  class="min-h-[44px] px-3 py-2 rounded-2xl font-black text-xs border-2 transition ${
+                    state.visualState.pancasilaHouseIdx === idx ? 'bg-amber-600 border-amber-700 text-white' : 'bg-white border-slate-200 text-slate-700'
+                  }">${r.icon} ${r.name.split(' ')[0]}</button>
+              `).join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      if (visualType === "pancasila_symbols") {
+        const silas = [
+          { no: 1, icon: "⭐", symbol: "Bintang Emas", text: "Ketuhanan Yang Maha Esa", act: "Berdoa sebelum belajar & rajin beribadah." },
+          { no: 2, icon: "⛓️", symbol: "Rantai Emas", text: "Kemanusiaan yang Adil dan Beradab", act: "Menolong teman yang jatuh & bersikap sopan." },
+          { no: 3, icon: "🌳", symbol: "Pohon Beringin", text: "Persatuan Indonesia", act: "Bermain rukun tanpa membeda-bedakan teman." },
+          { no: 4, icon: "🐃", symbol: "Kepala Banteng", text: "Kerakyatan yang Dipimpin oleh Hikmat Kebijaksanaan dalam Permusyawaratan/Perwakilan", act: "Berdiskusi memilih ketua kelas dengan musyawarah." },
+          { no: 5, icon: "🌾", symbol: "Padi dan Kapas", text: "Keadilan Sosial bagi Seluruh Rakyat Indonesia", act: "Berbagi bekal secara adil & gemar menabung." }
+        ];
+        const cur = silas[state.visualState.pancasilaSila % silas.length];
+        return `
+          <div class="flex flex-col items-center space-y-4 w-full">
+            <div class="bg-rose-50 border-2 border-rose-200 rounded-3xl p-5 text-center max-w-md w-full">
+              <div class="text-5xl mb-1">${cur.icon}</div>
+              <span class="inline-block px-3 py-0.5 rounded-full bg-rose-600 text-white font-black text-xs">Sila ke-${cur.no} • Simbol: ${cur.symbol}</span>
+              <div class="text-base sm:text-lg font-black text-slate-900 mt-2">"${cur.text}"</div>
+              <p class="text-xs sm:text-sm font-bold text-rose-800 bg-white px-3 py-2 rounded-xl border border-rose-200 mt-2">Contoh Sikap: ${cur.act}</p>
+            </div>
+            <div class="flex flex-wrap justify-center gap-2">
+              ${silas.map((s, idx) => `
+                <button onclick="setVisualProp('pancasilaSila', ${idx})"
+                  class="min-h-[46px] px-3.5 py-2 rounded-2xl font-black text-xs sm:text-sm border-2 transition ${
+                    state.visualState.pancasilaSila === idx ? 'bg-rose-600 border-rose-700 text-white' : 'bg-white border-slate-200 text-slate-700'
+                  }">${s.icon} Sila ${s.no}</button>
+              `).join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      if (visualType === "pancasila_rules") {
+        const locs = [
+          { place: "🏠 Di Rumah", rules: "1. Merapikan tempat tidur • 2. Pamit & cium tangan orang tua • 3. Meletakkan sepatu di rak." },
+          { place: "🏫 Di Sekolah", rules: "1. Datang sebelum bel masuk • 2. Memakai seragam rapi • 3. Melaksanakan piket kelas." },
+          { place: "🌳 Di Tempat Bermain", rules: "1. Antre bergantian main ayunan • 2. Membuang sampah di tempat sampah • 3. Tidak merusak tanaman." }
+        ];
+        const cur = locs[state.visualState.pancasilaRuleLoc % locs.length];
+        return `
+          <div class="flex flex-col items-center space-y-4 w-full">
+            <div class="bg-amber-50 border-2 border-amber-300 rounded-3xl p-5 text-center max-w-md w-full">
+              <div class="text-xl font-black text-amber-950 mb-2">Aturan ${cur.place}</div>
+              <p class="text-sm font-bold text-slate-700 leading-relaxed bg-white p-3.5 rounded-2xl border border-amber-200">${cur.rules}</p>
+            </div>
+            <div class="flex flex-wrap justify-center gap-2">
+              ${locs.map((l, idx) => `
+                <button onclick="setVisualProp('pancasilaRuleLoc', ${idx})"
+                  class="min-h-[46px] px-3.5 py-2 rounded-2xl font-black text-xs sm:text-sm border-2 transition ${
+                    state.visualState.pancasilaRuleLoc === idx ? 'bg-rose-600 border-rose-700 text-white' : 'bg-white border-slate-200 text-slate-700'
+                  }">${l.place}</button>
+              `).join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      if (visualType === "pancasila_diversity") {
+        const cards = [
+          { icon: "🪪", title: "Identitas Diriku", desc: "Nama lengkap, nama panggilan, umur, alamat rumah, dan nama ayah ibu." },
+          { icon: "🤝", title: "Keberagaman Teman", desc: "Teman kita berbeda bentuk rambut, warna kulit, suku, dan hobi, tetapi tetap sahabat!" },
+          { icon: "🦅", title: "Bhinneka Tunggal Ika", desc: "Semboyan pada pita kaki Garuda Pancasila yang artinya 'Berbeda-beda tetapi tetap satu jua'." }
+        ];
+        const cur = cards[state.visualState.pancasilaDivIdx % cards.length];
+        return `
+          <div class="flex flex-col items-center space-y-4 w-full">
+            <div class="bg-sky-50 border-2 border-sky-200 rounded-3xl p-5 text-center max-w-md w-full">
+              <div class="text-4xl mb-1">${cur.icon}</div>
+              <div class="text-xl font-black text-sky-950">${cur.title}</div>
+              <p class="text-sm font-bold text-slate-700 mt-1.5">${cur.desc}</p>
+            </div>
+            <div class="flex flex-wrap justify-center gap-2">
+              ${cards.map((c, idx) => `
+                <button onclick="setVisualProp('pancasilaDivIdx', ${idx})"
+                  class="min-h-[46px] px-3.5 py-2 rounded-2xl font-black text-xs sm:text-sm border-2 transition ${
+                    state.visualState.pancasilaDivIdx === idx ? 'bg-sky-600 border-sky-700 text-white' : 'bg-white border-slate-200 text-slate-700'
+                  }">${c.icon} ${c.title}</button>
+              `).join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      if (visualType === "pancasila_gotong_royong") {
+        const acts = [
+          { icon: "🧹", title: "Piket Kelas Bersama", benefit: "Kelas cepat bersih, debu hilang, dan belajar menjadi nyaman!" },
+          { icon: "🌱", title: "Kerja Bakti Halaman Rumah", benefit: "Ayah mencabut rumput, ibu menyapu, anak menyiram bunga — pekerjaan berat jadi ringan!" },
+          { icon: "📦", title: "Merapikan Mainan Bersama", benefit: "Mainan tertata rapi kembali dan tidak ada yang hilang." }
+        ];
+        const cur = acts[state.visualState.pancasilaGrIdx % acts.length];
+        return `
+          <div class="flex flex-col items-center space-y-4 w-full">
+            <div class="bg-emerald-50 border-2 border-emerald-200 rounded-3xl p-5 text-center max-w-md w-full">
+              <div class="text-4xl mb-1">${cur.icon}</div>
+              <div class="text-xl font-black text-emerald-950">${cur.title}</div>
+              <p class="text-sm font-bold text-emerald-800 mt-1.5">${cur.benefit}</p>
+            </div>
+            <div class="flex flex-wrap justify-center gap-2">
+              ${acts.map((a, idx) => `
+                <button onclick="setVisualProp('pancasilaGrIdx', ${idx})"
+                  class="min-h-[46px] px-3.5 py-2 rounded-2xl font-black text-xs sm:text-sm border-2 transition ${
+                    state.visualState.pancasilaGrIdx === idx ? 'bg-emerald-600 border-emerald-700 text-white' : 'bg-white border-slate-200 text-slate-700'
+                  }">${a.icon} Contoh ${idx + 1}</button>
+              `).join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      if (visualType === "jarimatika_hand") {
+        const n = state.visualState.jariNumber;
+        const thumbOpen = n >= 5;
+        const onesCount = n >= 5 ? n - 5 : n;
+        const fingerActive = (idx) => idx <= onesCount;
+
+        return `
+          <div class="flex flex-col items-center space-y-4 w-full">
+            <div class="px-4 py-1.5 rounded-full bg-indigo-100 text-indigo-900 font-black text-sm">
+              Tangan Kanan (Satuan) = <span class="text-xl text-indigo-600">${n}</span>
+            </div>
+            <svg viewBox="0 0 260 220" class="w-60 h-48">
+              <rect x="75" y="105" width="110" height="85" rx="32" fill="#FDE68A" stroke="#D97706" stroke-width="4" />
+              <rect x="28" y="${thumbOpen ? 95 : 130}" width="52" height="24" rx="12" transform="rotate(${thumbOpen ? -25 : 15} 55 120)"
+                fill="${thumbOpen ? '#6366F1' : '#E2E8F0'}" stroke="${thumbOpen ? '#3730A3' : '#94A3B8'}" stroke-width="3" />
+              <text x="42" y="${thumbOpen ? 92 : 152}" font-size="11" font-weight="900" fill="${thumbOpen ? '#3730A3' : '#64748B'}">5</text>
+              ${[0, 1, 2, 3].map(i => {
+                const open = fingerActive(i + 1);
+                const x = 82 + i * 26;
+                return `
+                  <rect x="${x}" y="${open ? 28 : 75}" width="20" height="${open ? 82 : 36}" rx="10"
+                    fill="${open ? '#0EA5E9' : '#E2E8F0'}" stroke="${open ? '#0369A1' : '#94A3B8'}" stroke-width="3" />
+                  <text x="${x + 6}" y="${open ? 22 : 70}" font-size="11" font-weight="900" fill="${open ? '#0369A1' : '#64748B'}">1</text>
+                `;
+              }).join("")}
+            </svg>
+            <div class="flex flex-wrap justify-center gap-1.5">
+              ${[1,2,3,4,5,6,7,8,9].map(num => `
+                <button onclick="setVisualProp('jariNumber', ${num})"
+                  class="min-h-[44px] min-w-[44px] rounded-xl font-black text-sm border-2 transition ${
+                    n === num ? 'bg-indigo-600 border-indigo-700 text-white' : 'bg-white border-slate-200 text-slate-700'
+                  }">${num}</button>
+              `).join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      if (visualType === "jarimatika_tens") {
+        const t = state.visualState.jariTens;
+        const unit = t / 10;
+        const thumbOpen = unit >= 5;
+        const fingersOpen = unit >= 5 ? unit - 5 : unit;
+        return `
+          <div class="flex flex-col items-center space-y-4 w-full">
+            <div class="px-4 py-1.5 rounded-full bg-purple-100 text-purple-900 font-black text-sm">
+              Tangan Kiri (Puluhan) = <span class="text-xl text-purple-700">${t}</span>
+            </div>
+            <svg viewBox="0 0 260 220" class="w-60 h-48">
+              <rect x="75" y="105" width="110" height="85" rx="32" fill="#FDE68A" stroke="#D97706" stroke-width="4" />
+              <rect x="180" y="${thumbOpen ? 95 : 130}" width="52" height="24" rx="12" transform="rotate(${thumbOpen ? 25 : -15} 205 120)"
+                fill="${thumbOpen ? '#9333EA' : '#E2E8F0'}" stroke="${thumbOpen ? '#581C87' : '#94A3B8'}" stroke-width="3" />
+              <text x="195" y="${thumbOpen ? 90 : 155}" font-size="11" font-weight="900" fill="${thumbOpen ? '#581C87' : '#64748B'}">50</text>
+              ${[0, 1, 2, 3].map(i => {
+                const open = (4 - i) <= fingersOpen;
+                const x = 82 + i * 26;
+                return `
+                  <rect x="${x}" y="${open ? 28 : 75}" width="20" height="${open ? 82 : 36}" rx="10"
+                    fill="${open ? '#EC4899' : '#E2E8F0'}" stroke="${open ? '#9D174D' : '#94A3B8'}" stroke-width="3" />
+                  <text x="${x + 3}" y="${open ? 22 : 70}" font-size="10" font-weight="900" fill="${open ? '#9D174D' : '#64748B'}">10</text>
+                `;
+              }).join("")}
+            </svg>
+            <div class="flex flex-wrap justify-center gap-1.5">
+              ${[10,20,30,40,50,60,70,80,90].map(num => `
+                <button onclick="setVisualProp('jariTens', ${num})"
+                  class="min-h-[44px] px-3 rounded-xl font-black text-xs sm:text-sm border-2 transition ${
+                    t === num ? 'bg-purple-600 border-purple-700 text-white' : 'bg-white border-slate-200 text-slate-700'
+                  }">${num}</button>
+              `).join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      if (visualType === "jarimatika_combo") {
+        const tens = state.visualState.comboTens;
+        const ones = state.visualState.comboOnes;
+        return `
+          <div class="flex flex-col items-center space-y-4 w-full">
+            <div class="px-5 py-2 rounded-2xl bg-indigo-600 text-white font-black text-base sm:text-lg shadow-xs">
+              Kiri (${tens}) + Kanan (${ones}) = <span class="text-amber-300 text-2xl">${tens + ones}</span>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-lg">
+              <div class="bg-purple-50 border-2 border-purple-200 rounded-2xl p-3.5 text-center space-y-2">
+                <div class="text-xs font-black text-purple-900">🤚 Tangan Kiri (Puluhan): ${tens}</div>
+                <div class="flex flex-wrap justify-center gap-1">
+                  ${[10,20,30,40,50,60,70,80,90].map(v => `
+                    <button onclick="setVisualProp('comboTens', ${v})" class="px-2.5 py-1.5 rounded-lg font-black text-xs border ${
+                      tens === v ? 'bg-purple-600 text-white border-purple-700' : 'bg-white text-slate-700 border-slate-200'
+                    }">${v}</button>
+                  `).join("")}
+                </div>
+              </div>
+              <div class="bg-sky-50 border-2 border-sky-200 rounded-2xl p-3.5 text-center space-y-2">
+                <div class="text-xs font-black text-sky-900">🖐️ Tangan Kanan (Satuan): ${ones}</div>
+                <div class="flex flex-wrap justify-center gap-1">
+                  ${[1,2,3,4,5,6,7,8,9].map(v => `
+                    <button onclick="setVisualProp('comboOnes', ${v})" class="px-2.5 py-1.5 rounded-lg font-black text-xs border ${
+                      ones === v ? 'bg-sky-600 text-white border-sky-700' : 'bg-white text-slate-700 border-slate-200'
+                    }">${v}</button>
+                  `).join("")}
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      if (visualType === "jarimatika_mul9") {
+        const f = state.visualState.mulFactor9;
+        const leftCount = f - 1;
+        const rightCount = 10 - f;
+        return `
+          <div class="flex flex-col items-center space-y-4 w-full">
+            <div class="px-5 py-2 rounded-2xl bg-indigo-600 text-white font-black text-base sm:text-lg">
+              9 × ${f} = <span class="text-amber-300 text-2xl">${9 * f}</span>
+            </div>
+            <div class="flex flex-wrap justify-center gap-1.5 bg-white p-3.5 rounded-2xl border border-slate-200">
+              ${[1,2,3,4,5,6,7,8,9,10].map(idx => {
+                const folded = idx === f;
+                const isLeft = idx < f;
+                return `
+                  <div class="w-8 h-16 rounded-xl flex flex-col items-center justify-center font-black text-xs border-2 ${
+                    folded ? 'bg-rose-500 border-rose-700 text-white scale-90' : isLeft ? 'bg-purple-100 border-purple-400 text-purple-900' : 'bg-sky-100 border-sky-400 text-sky-900'
+                  }">
+                    <span>${idx}</span>
+                    <span class="text-[9px]">${folded ? 'LIPAT' : isLeft ? '10' : '1'}</span>
+                  </div>
+                `;
+              }).join("")}
+            </div>
+            <div class="text-xs sm:text-sm font-extrabold text-slate-700">
+              Kiri: <span class="text-purple-700">${leftCount} jari (${leftCount * 10})</span> • Kanan: <span class="text-sky-700">${rightCount} jari (${rightCount})</span>
+            </div>
+            <div class="flex flex-wrap justify-center gap-1.5">
+              ${[1,2,3,4,5,6,7,8,9,10].map(num => `
+                <button onclick="setVisualProp('mulFactor9', ${num})"
+                  class="min-h-[42px] px-3 rounded-xl font-black text-xs border-2 transition ${
+                    f === num ? 'bg-indigo-600 border-indigo-700 text-white' : 'bg-white border-slate-200 text-slate-700'
+                  }">9×${num}</button>
+              `).join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      if (visualType === "jarimatika_div9") {
+        const dividend = state.visualState.divDividend9;
+        const ans = dividend / 9;
+        const leftCount = ans - 1;
+        const rightCount = 10 - ans;
+        return `
+          <div class="flex flex-col items-center space-y-4 w-full">
+            <div class="px-5 py-2 rounded-2xl bg-emerald-600 text-white font-black text-base sm:text-lg">
+              ${dividend} ÷ 9 = <span class="text-amber-300 text-2xl">${ans}</span>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 text-center space-y-1">
+              <div class="text-sm font-black text-slate-800">Kiri: ${leftCount} jari | Pembatas: Jari ke-${ans} | Kanan: ${rightCount} jari</div>
+              <p class="text-xs font-bold text-emerald-700">Jari ke-${ans} menjadi pembatas antara puluhan (${leftCount}) dan satuan (${rightCount})!</p>
+            </div>
+            <div class="flex flex-wrap justify-center gap-1.5">
+              ${[18,27,36,45,54,63,72,81].map(val => `
+                <button onclick="setVisualProp('divDividend9', ${val})"
+                  class="min-h-[42px] px-3 rounded-xl font-black text-xs border-2 transition ${
+                    dividend === val ? 'bg-emerald-600 border-emerald-700 text-white' : 'bg-white border-slate-200 text-slate-700'
+                  }">${val}÷9</button>
+              `).join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      if (visualType === "pictograph_fruits") {
+        const { pictoApples, pictoBananas, pictoOranges } = state.visualState;
+        return `
+          <div class="w-full max-w-md space-y-3">
+            <div class="bg-white rounded-2xl p-4 border border-slate-200 space-y-2.5 text-sm font-black">
+              <div class="flex items-center justify-between">
+                <span>🍎 Apel (${pictoApples}):</span>
+                <span>${"🍎".repeat(pictoApples)}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span>🍌 Pisang (${pictoBananas}):</span>
+                <span>${"🍌".repeat(pictoBananas)}</span>
+              </div>
+              <div class="flex items-center justify-between">
+                <span>🍊 Jeruk (${pictoOranges}):</span>
+                <span>${"🍊".repeat(pictoOranges)}</span>
+              </div>
+            </div>
+            <div class="flex flex-wrap justify-center gap-2">
+              <button onclick="setVisualProp('pictoApples', ${pictoApples >= 7 ? 1 : pictoApples + 1})" class="min-h-[44px] px-3.5 py-2 rounded-xl bg-rose-100 text-rose-800 font-extrabold text-xs">+ Tambah Apel</button>
+              <button onclick="setVisualProp('pictoBananas', ${pictoBananas >= 7 ? 1 : pictoBananas + 1})" class="min-h-[44px] px-3.5 py-2 rounded-xl bg-amber-100 text-amber-800 font-extrabold text-xs">+ Tambah Pisang</button>
+              <button onclick="setVisualProp('pictoOranges', ${pictoOranges >= 7 ? 1 : pictoOranges + 1})" class="min-h-[44px] px-3.5 py-2 rounded-xl bg-orange-100 text-orange-800 font-extrabold text-xs">+ Tambah Jeruk</button>
+            </div>
+          </div>
+        `;
+      }
+
+      if (visualType === "shapes_2d") {
+        return `
+          <div class="grid grid-cols-3 gap-4 w-full max-w-md text-center">
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 flex flex-col items-center">
+              <svg viewBox="0 0 100 100" class="w-20 h-20"><polygon points="50,12 90,85 10,85" fill="#FDE047" stroke="#CA8A04" stroke-width="5" /></svg>
+              <span class="font-black text-sm mt-2">Segitiga</span>
+              <span class="text-xs text-slate-500 font-bold">3 Sisi</span>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 flex flex-col items-center">
+              <svg viewBox="0 0 100 100" class="w-20 h-20"><rect x="16" y="16" width="68" height="68" rx="8" fill="#7DD3FC" stroke="#0284C7" stroke-width="5" /></svg>
+              <span class="font-black text-sm mt-2">Segiempat</span>
+              <span class="text-xs text-slate-500 font-bold">4 Sisi</span>
+            </div>
+            <div class="bg-white p-4 rounded-2xl border border-slate-200 flex flex-col items-center">
+              <svg viewBox="0 0 100 100" class="w-20 h-20"><circle cx="50" cy="50" r="36" fill="#86EFAC" stroke="#16A34A" stroke-width="5" /></svg>
+              <span class="font-black text-sm mt-2">Lingkaran</span>
+              <span class="text-xs text-slate-500 font-bold">0 Pojok</span>
+            </div>
+          </div>
+        `;
+      }
+
+      if (visualType === "measure_length") {
+        return `
+          <svg viewBox="0 0 360 130" class="w-full max-w-md h-auto">
+            <line x1="30" y1="15" x2="30" y2="115" stroke="#EF4444" stroke-width="3" stroke-dasharray="5 5" />
+            <rect x="30" y="30" width="240" height="22" rx="6" fill="#FBBF24" stroke="#D97706" stroke-width="2" />
+            <polygon points="270,30 295,41 270,52" fill="#FDE68A" stroke="#D97706" stroke-width="2" />
+            <text x="38" y="45" font-size="11" font-weight="900" fill="#78350F">Pensil = 5 Klip Kertas</text>
+            ${[0,1,2,3,4].map(i => `<rect x="${30 + i * 52}" y="68" width="46" height="16" rx="8" fill="none" stroke="#0284C7" stroke-width="3" />`).join("")}
+          </svg>
+        `;
+      }
+
+      if (visualType === "pai_hijaiyah") {
+        const letters = [
+          { arab: "اَ - اِ - اُ", latin: "A - I - U (Alif)" },
+          { arab: "بَ - بِ - بُ", latin: "Ba - Bi - Bu (Ba)" },
+          { arab: "تَ - تِ - تُ", latin: "Ta - Ti - Tu (Ta)" },
+          { arab: "جَ - جِ - جُ", latin: "Ja - Ji - Ju (Jim)" }
+        ];
+        const cur = letters[state.visualState.hijaiyahIndex % letters.length];
+        return `
+          <div class="flex flex-col items-center space-y-4">
+            <div class="bg-emerald-50 border-2 border-emerald-200 rounded-3xl px-8 py-5 text-center">
+              <div class="text-4xl sm:text-5xl font-black text-emerald-900 mb-2" dir="rtl">${cur.arab}</div>
+              <div class="text-base font-extrabold text-emerald-700">${cur.latin}</div>
+            </div>
+            <div class="flex flex-wrap justify-center gap-2">
+              ${letters.map((l, idx) => `
+                <button onclick="setVisualProp('hijaiyahIndex', ${idx})"
+                  class="min-h-[44px] px-4 py-2 rounded-2xl font-extrabold text-xs border-2 transition ${
+                    state.visualState.hijaiyahIndex === idx ? 'bg-emerald-600 border-emerald-700 text-white' : 'bg-white border-slate-200 text-slate-700'
+                  }">${l.latin.split(' ')[0]}</button>
+              `).join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      if (visualType === "pai_rukun_iman") {
+        const list = [
+          "1. Iman kepada Allah Swt.",
+          "2. Iman kepada Malaikat-malaikat Allah",
+          "3. Iman kepada Kitab-kitab Allah",
+          "4. Iman kepada Nabi dan Rasul Allah",
+          "5. Iman kepada Hari Kiamat",
+          "6. Iman kepada Qada dan Qadar"
+        ];
+        const cur = list[state.visualState.rukunImanIndex % list.length];
+        return `
+          <div class="flex flex-col items-center space-y-4">
+            <div class="bg-emerald-50 border-2 border-emerald-200 rounded-3xl p-5 text-center max-w-md">
+              <div class="text-lg sm:text-xl font-black text-emerald-950">${cur}</div>
+            </div>
+            <div class="flex flex-wrap justify-center gap-2">
+              ${[1,2,3,4,5,6].map((n, idx) => `
+                <button onclick="setVisualProp('rukunImanIndex', ${idx})"
+                  class="min-h-[44px] min-w-[44px] rounded-xl font-black text-sm border-2 ${
+                    state.visualState.rukunImanIndex === idx ? 'bg-emerald-600 text-white border-emerald-700' : 'bg-white text-slate-700 border-slate-200'
+                  }">${n}</button>
+              `).join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      if (visualType === "pai_wudu") {
+        const steps = [
+          { no: 1, title: "Niat & Cuci Telapak Tangan", desc: "Baca Basmalah sambil membasuh kedua telapak tangan 3 kali." },
+          { no: 2, title: "Berkumur & Basuh Hidung", desc: "Berkumur dan membersihkan lubang hidung 3 kali." },
+          { no: 3, title: "Membasuh Muka (Wajib)", desc: "Membasuh seluruh wajah dari dahi sampai dagu 3 kali." },
+          { no: 4, title: "Membasuh Kedua Tangan sampai Siku (Wajib)", desc: "Dahulukan tangan kanan lalu tangan kiri hingga siku." },
+          { no: 5, title: "Mengusap Sebagian Kepala & Telinga (Wajib)", desc: "Mengusap kepala dengan tangan basah lalu daun telinga." },
+          { no: 6, title: "Membasuh Kedua Kaki sampai Mata Kaki (Wajib)", desc: "Dahulukan kaki kanan lalu kaki kiri hingga mata kaki." }
+        ];
+        const cur = steps[state.visualState.wuduStepIndex % steps.length];
+        return `
+          <div class="flex flex-col items-center space-y-4">
+            <div class="bg-sky-50 border-2 border-sky-200 rounded-3xl p-5 text-center max-w-md">
+              <span class="px-3 py-1 rounded-full bg-sky-600 text-white font-black text-xs">Langkah #${cur.no}</span>
+              <h4 class="text-lg font-black text-sky-950 mt-2">${cur.title}</h4>
+              <p class="text-sm font-semibold text-slate-700 mt-1">${cur.desc}</p>
+            </div>
+            <div class="flex flex-wrap justify-center gap-2">
+              ${steps.map((s, idx) => `
+                <button onclick="setVisualProp('wuduStepIndex', ${idx})"
+                  class="min-h-[44px] min-w-[44px] rounded-xl font-black text-sm border-2 ${
+                    state.visualState.wuduStepIndex === idx ? 'bg-sky-600 text-white border-sky-700' : 'bg-white text-slate-700 border-slate-200'
+                  }">${s.no}</button>
+              `).join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      if (visualType === "syllable_builder" || visualType === "magic_words") {
+        const words = visualType === "magic_words"
+          ? [
+              { a: "🙏", b: "TOLONG", res: "Diucapkan saat meminta bantuan teman." },
+              { a: "😊", b: "TERIMA KASIH", res: "Diucapkan setelah dibantu atau diberi sesuatu." },
+              { a: "🤝", b: "MAAF", res: "Diucapkan saat berbuat kesalahan." },
+              { a: "🚶", b: "PERMISI", res: "Diucapkan saat lewat di depan orang lain." }
+            ]
+          : [
+              { a: "BO", b: "LA", res: "BOLA ⚽" },
+              { a: "BU", b: "KU", res: "BUKU 📘" },
+              { a: "GA", b: "JAH", res: "GAJAH 🐘" },
+              { a: "KU", b: "DA", res: "KUDA 🐴" }
+            ];
+        const cur = words[state.visualState.syllableIdx % words.length];
+        return `
+          <div class="flex flex-col items-center space-y-4">
+            <div class="flex items-center gap-3">
+              <div class="px-5 py-3 rounded-2xl bg-amber-100 border-2 border-amber-300 font-black text-xl text-amber-900">${cur.a}</div>
+              <span class="font-black text-xl text-slate-400">+</span>
+              <div class="px-5 py-3 rounded-2xl bg-sky-100 border-2 border-sky-300 font-black text-xl text-sky-900">${cur.b}</div>
+            </div>
+            <div class="px-5 py-2.5 rounded-2xl bg-emerald-100 text-emerald-900 font-black text-base text-center">${cur.res}</div>
+            <div class="flex flex-wrap justify-center gap-2">
+              ${words.map((w, idx) => `
+                <button onclick="setVisualProp('syllableIdx', ${idx})"
+                  class="min-h-[44px] px-4 py-2 rounded-2xl font-extrabold text-xs border-2 ${
+                    state.visualState.syllableIdx === idx ? 'bg-sky-600 text-white border-sky-700' : 'bg-white text-slate-700 border-slate-200'
+                  }">Kartu #${idx + 1}</button>
+              `).join("")}
+            </div>
+          </div>
+        `;
+      }
+
+      if (Object.prototype.hasOwnProperty.call(VOCAB_SETS, visualType)) {
+        return getVocabDeckHtml(visualType);
+      }
+
+      if (visualType !== "counting_apples") {
+        return getPointDeckHtml();
+      }
+
+      const count = state.visualState.appleCount;
+      let applesSvg = "";
+      for (let i = 0; i < count; i++) {
+        const col = i % 5;
+        const row = Math.floor(i / 5);
+        const cx = 65 + col * 58;
+        const cy = 48 + row * 56;
+        applesSvg += `
+          <g>
+            <circle cx="${cx}" cy="${cy}" r="18" fill="#EF4444" stroke="#B91C1C" stroke-width="2.5" />
+            <path d="M${cx} ${cy - 18} Q${cx + 4} ${cy - 28} ${cx + 10} ${cy - 25}" stroke="#15803D" stroke-width="3" fill="none" stroke-linecap="round" />
+          </g>
+        `;
+      }
+      return `
+        <div class="flex flex-col items-center space-y-3 w-full">
+          <div class="px-4 py-1.5 rounded-full bg-rose-100 text-rose-800 font-black text-sm">Jumlah Apel = ${count}</div>
+          <svg viewBox="0 0 360 135" class="w-full max-w-md h-auto">
+            <rect x="20" y="12" width="320" height="112" rx="22" fill="#FEF3C7" stroke="#F59E0B" stroke-width="3" />
+            ${applesSvg}
+          </svg>
+          <div class="flex items-center gap-3">
+            <button onclick="setVisualProp('appleCount', ${Math.max(1, count - 1)})" class="min-h-[46px] px-4 py-2 rounded-2xl bg-rose-500 text-white font-black text-sm">- 1 Apel</button>
+            <button onclick="setVisualProp('appleCount', ${Math.min(10, count + 1)})" class="min-h-[46px] px-4 py-2 rounded-2xl bg-emerald-500 text-white font-black text-sm">+ 1 Apel</button>
+          </div>
+        </div>
+      `;
+    }
+
+    /**
+     * =====================================================================
+     * 6. LATIHAN SOAL & PEMBAHASAN INSTAN (10 SOAL ACAK PER SESI)
+     * =====================================================================
+     */
+    function shuffleArray(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function startQuizForChapter(materiId) {
+      const rawQuestions = appData.soal.filter(s => s.materi_id === materiId);
+      if (rawQuestions.length === 0) {
+        document.getElementById("study-tab-content").innerHTML = `
+          <div class="bg-white rounded-3xl p-8 text-center border border-slate-200 font-bold text-slate-600">
+            Belum ada soal untuk bab ini.
+          </div>
+        `;
+        return;
+      }
+
+      // Prioritaskan soal yang belum pernah dijawab benar agar 100 soal tergarap merata
+      const masteredSet = new Set(userProgress.mastered || []);
+      const unmastered = rawQuestions.filter(q => !masteredSet.has(q.id));
+      const pool = unmastered.length > 0 ? unmastered : rawQuestions;
+      const sessionQuestions = shuffleArray(pool).slice(0, 10);
+
+      const prepared = sessionQuestions.map(q => ({
+        ...q,
+        options: shuffleArray([q.correct_answer, q.wrong_answer_1, q.wrong_answer_2, q.wrong_answer_3])
+      }));
+
+      state.quiz = {
+        questions: prepared,
+        totalBankCount: rawQuestions.length,
+        masteredCount: rawQuestions.length - unmastered.length,
+        currentIndex: 0,
+        scoreCount: 0,
+        answered: false,
+        selectedOption: null,
+        finished: false
+      };
+      renderQuizUI();
+    }
+
+    function renderQuizUI() {
+      const container = document.getElementById("study-tab-content");
+      const qState = state.quiz;
+
+      if (qState.finished) {
+        const total = qState.questions.length;
+        const pct = Math.round((qState.scoreCount / total) * 100);
+        const stars = pct >= 80 ? "⭐⭐⭐" : pct >= 50 ? "⭐⭐" : "⭐";
+
+        const prevBest = Number(userProgress.scores[state.activeMateriId]) || 0;
+        if (pct >= prevBest) userProgress.scores[state.activeMateriId] = pct;
+        if (pct >= 60 && !userProgress.completed.includes(state.activeMateriId)) {
+          userProgress.completed.push(state.activeMateriId);
+          updateCompleteButtonUI();
+        }
+        persistProgress();
+        renderHome();
+
+        const rawQuestions = appData.soal.filter(s => s.materi_id === state.activeMateriId);
+        const masteredSet = new Set(userProgress.mastered || []);
+        const nowMastered = rawQuestions.filter(q => masteredSet.has(q.id)).length;
+
+        container.innerHTML = `
+          <div class="bg-white rounded-3xl p-6 sm:p-8 border-2 border-amber-200 text-center space-y-5 animate-pop">
+            <div class="text-5xl">${stars}</div>
+            <div>
+              <span class="px-3 py-1 rounded-full bg-amber-100 text-amber-800 text-xs font-black">HASIL LATIHAN</span>
+              <h2 class="text-2xl sm:text-3xl font-black text-slate-800 mt-2">Skor Sesi Ini: ${pct}%</h2>
+              <p class="text-base font-bold text-slate-500 mt-1">Benar ${qState.scoreCount} dari ${total} soal!</p>
+              <p class="text-xs font-extrabold text-emerald-700 mt-2">Total Penguasaan Bab: ${nowMastered} dari ${rawQuestions.length} soal</p>
+            </div>
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
+              <button onclick="startQuizForChapter('${state.activeMateriId}')"
+                class="min-h-[48px] w-full sm:w-auto px-6 py-3 rounded-2xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-sm">
+                🔄 Latihan Set Berikutnya (Acak Soal)
+              </button>
+              <button onclick="goHome()"
+                class="min-h-[48px] w-full sm:w-auto px-6 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-extrabold text-sm">
+                📚 Pilih Bab Lain
+              </button>
+            </div>
+          </div>
+        `;
+        return;
+      }
+
+      const cur = qState.questions[qState.currentIndex];
+      const letters = ["A", "B", "C", "D"];
+      const isLast = qState.currentIndex === qState.questions.length - 1;
+
+      container.innerHTML = `
+        <div class="bg-white rounded-3xl p-5 sm:p-7 border border-slate-200/90 space-y-5 animate-pop">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <span class="px-3 py-1 rounded-full bg-sky-100 text-sky-800 text-xs font-black">
+              Soal ${qState.currentIndex + 1} dari ${qState.questions.length}
+            </span>
+            <span class="text-xs font-bold text-slate-400">
+              Bank Soal Bab: ${qState.totalBankCount} Soal
+            </span>
+            <span class="text-xs font-extrabold text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
+              Benar: ${qState.scoreCount}
+            </span>
+          </div>
+
+          <h3 class="text-lg sm:text-xl font-black text-slate-800 leading-snug">${esc(cur.question)}</h3>
+
+          <div class="space-y-2.5">
+            ${cur.options.map((opt, i) => {
+              let btnStyle = "bg-slate-50 hover:bg-sky-50 border-slate-200 text-slate-800";
+              let badge = "";
+              if (qState.answered) {
+                if (opt === cur.correct_answer) {
+                  btnStyle = "bg-emerald-50 border-emerald-500 text-emerald-950 ring-2 ring-emerald-200";
+                  badge = `<span class="px-2.5 py-0.5 rounded-lg bg-emerald-500 text-white text-xs font-black">✓ Benar</span>`;
+                } else if (opt === qState.selectedOption) {
+                  btnStyle = "bg-rose-50 border-rose-400 text-rose-900";
+                  badge = `<span class="px-2.5 py-0.5 rounded-lg bg-rose-500 text-white text-xs font-black">✕ Salah</span>`;
+                } else {
+                  btnStyle = "bg-slate-50 border-slate-200 text-slate-400 opacity-70";
+                }
+              }
+              return `
+                <button ${qState.answered ? "disabled" : ""} onclick="submitQuizAnswer(${i})"
+                  class="w-full min-h-[54px] p-3.5 sm:p-4 rounded-2xl border-2 text-left font-bold text-sm sm:text-base transition flex items-center justify-between gap-3 ${btnStyle}">
+                  <div class="flex items-center gap-3">
+                    <span class="w-8 h-8 rounded-xl bg-white border border-slate-200 flex items-center justify-center font-black text-xs shrink-0">${letters[i]}</span>
+                    <span>${esc(opt)}</span>
+                  </div>
+                  ${badge}
+                </button>
+              `;
+            }).join("")}
+          </div>
+
+          ${qState.answered ? `
+            <div class="rounded-3xl p-4 sm:p-5 bg-sky-50/80 border-2 border-sky-200 space-y-3 animate-pop">
+              <div class="font-black text-sm text-sky-950">💡 Pembahasan Instan</div>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div class="bg-white rounded-2xl p-3.5 border border-slate-200">
+                  <div class="text-xs font-black text-slate-500 uppercase mb-1">🐢 Langkah Biasa</div>
+                  <p class="text-sm font-semibold text-slate-700">${esc(cur.explanation_normal)}</p>
+                </div>
+                <div class="bg-amber-50 rounded-2xl p-3.5 border border-amber-300">
+                  <div class="text-xs font-black text-amber-800 uppercase mb-1">⚡ Trik Cara Cepat</div>
+                  <p class="text-sm font-bold text-slate-800">${esc(cur.explanation_fast_trick)}</p>
+                </div>
+              </div>
+              <div class="pt-1 flex justify-end">
+                <button onclick="nextQuizQuestion()"
+                  class="min-h-[48px] w-full sm:w-auto px-6 py-3 rounded-2xl bg-sky-600 hover:bg-sky-700 text-white font-extrabold text-sm">
+                  ${isLast ? "Lihat Skor Akhir 🏆" : "Soal Berikutnya →"}
+                </button>
+              </div>
+            </div>
+          ` : ``}
+        </div>
+      `;
+    }
+
+    function submitQuizAnswer(optIdx) {
+      if (state.quiz.answered) return;
+      const cur = state.quiz.questions[state.quiz.currentIndex];
+      const selectedOpt = cur && cur.options[optIdx];
+      if (selectedOpt === undefined) return;
+      state.quiz.answered = true;
+      state.quiz.selectedOption = selectedOpt;
+      if (selectedOpt === cur.correct_answer) {
+        state.quiz.scoreCount += 1;
+        if (!Array.isArray(userProgress.mastered)) userProgress.mastered = [];
+        if (!userProgress.mastered.includes(cur.id)) {
+          userProgress.mastered.push(cur.id);
+        }
+      }
+      renderQuizUI();
+    }
+
+    function nextQuizQuestion() {
+      if (state.quiz.currentIndex < state.quiz.questions.length - 1) {
+        state.quiz.currentIndex += 1;
+        state.quiz.answered = false;
+        state.quiz.selectedOption = null;
+      } else {
+        state.quiz.finished = true;
+      }
+      renderQuizUI();
+    }
+
+    /**
+     * =====================================================================
+     * 7. STUDIO TAMBAH & UPLOAD MATERI MANDIRI (.JSON - KHUSUS ADMIN)
+     * =====================================================================
+     */
+    function openStudioModal() {
+      document.getElementById("studio-modal").classList.remove("hidden");
+    }
+
+    function closeStudioModal() {
+      document.getElementById("studio-modal").classList.add("hidden");
+    }
+
+    function switchStudioMode(mode) {
+      const formPanel = document.getElementById("studio-form-panel");
+      const jsonPanel = document.getElementById("studio-json-panel");
+      const tabForm = document.getElementById("studio-tab-form");
+      const tabJson = document.getElementById("studio-tab-json");
+
+      if (mode === "form") {
+        formPanel.classList.remove("hidden");
+        jsonPanel.classList.add("hidden");
+        tabForm.className = "min-h-[44px] rounded-xl font-extrabold text-xs sm:text-sm bg-white text-sky-700 shadow-2xs";
+        tabJson.className = "min-h-[44px] rounded-xl font-extrabold text-xs sm:text-sm text-slate-600";
+      } else {
+        formPanel.classList.add("hidden");
+        jsonPanel.classList.remove("hidden");
+        tabJson.className = "min-h-[44px] rounded-xl font-extrabold text-xs sm:text-sm bg-white text-sky-700 shadow-2xs";
+        tabForm.className = "min-h-[44px] rounded-xl font-extrabold text-xs sm:text-sm text-slate-600";
+      }
+    }
+
+    function handleSaveNewChapter(e) {
+      e.preventDefault();
+      const sem = Number(document.getElementById("inp-semester").value);
+      const mapel = document.getElementById("inp-mapel").value;
+      const bab = document.getElementById("inp-bab").value.trim();
+      const ringkasan = document.getElementById("inp-ringkasan").value.trim();
+      const poin = document.getElementById("inp-poin").value.trim();
+      const trik = document.getElementById("inp-trik").value.trim();
+
+      const newId = `CUSTOM-S${sem}-${Date.now()}`;
+      const newMateri = {
+        id: newId,
+        semester: sem,
+        kurikulum: "Materi Tambahan Mandiri",
+        kelas: 1,
+        mapel: mapel,
+        bab: bab,
+        deskripsi: ringkasan.slice(0, 110) + (ringkasan.length > 110 ? "..." : ""),
+        ringkasan_intro: ringkasan,
+        poin_penting: [{ judul: "Poin Utama", isi: poin }],
+        cara_biasa_judul: "Langkah Biasa",
+        cara_biasa_langkah: [ringkasan],
+        cara_cepat_judul: "Trik Cepat ⚡",
+        cara_cepat_langkah: [trik],
+        visual_type: "point_cards",
+        visual_caption: "Baca poin penting satu per satu.",
+        video_judul: `Video Pembelajaran: ${bab}`,
+        video_durasi: "4 Menit • Hemat Data",
+        video_url: `https://www.youtube.com/results?search_query=${encodeURIComponent(bab + " kelas 1 sd")}`
+      };
+
+      const newSoal = {
+        id: `Q-${newId}`,
+        materi_id: newId,
+        question: document.getElementById("inp-q").value.trim(),
+        correct_answer: document.getElementById("inp-ans-ok").value.trim(),
+        wrong_answer_1: document.getElementById("inp-ans-w1").value.trim(),
+        wrong_answer_2: document.getElementById("inp-ans-w2").value.trim(),
+        wrong_answer_3: document.getElementById("inp-ans-w3").value.trim(),
+        explanation_normal: ringkasan,
+        explanation_fast_trick: trik
+      };
+
+      const cleanM = normalizeMateri(newMateri);
+      const cleanS = normalizeSoal(newSoal);
+      if (!cleanM || !cleanS) {
+        showToast("Isi form belum lengkap, atau ada pilihan jawaban yang sama.");
+        return;
+      }
+      customData.materi.unshift(cleanM);
+      customData.soal.unshift(cleanS);
+      if (!saveCustom()) {
+        customData.materi.shift();
+        customData.soal.shift();
+        return;
+      }
+      rebuildAppData();
+
+      e.target.reset();
+      closeStudioModal();
+      state.selectedSemester = sem;
+      state.selectedMapel = "SEMUA";
+      renderHome();
+      showToast(`Bab "${bab}" berhasil disimpan ke Semester ${sem}!`);
+    }
+
+    function handleJsonFileUpload(event) {
+      const input = event.target;
+      const file = input.files && input.files[0];
+      if (!file) return;
+      if (file.size > 2 * 1024 * 1024) {
+        showToast("File terlalu besar (maksimal 2 MB).");
+        input.value = "";
+        return;
+      }
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const uploaded = JSON.parse(e.target.result);
+          if (!uploaded || !Array.isArray(uploaded.materi)) {
+            showToast("Format file JSON tidak valid.");
+            return;
+          }
+          const clean = normalizeData(uploaded);
+          const knownM = new Set(appData.materi.map(m => m.id));
+          const knownQ = new Set(appData.soal.map(q => q.id));
+          const newM = clean.materi.filter(m => !knownM.has(m.id));
+          const allowed = new Set([...knownM, ...newM.map(m => m.id)]);
+          const newS = clean.soal.filter(q => !knownQ.has(q.id) && allowed.has(q.materi_id));
+          if (newM.length === 0 && newS.length === 0) {
+            showToast("Tidak ada materi baru yang valid di file ini.");
+            return;
+          }
+          const backup = JSON.stringify(customData);
+          customData.materi = [...newM, ...customData.materi];
+          customData.soal = [...newS, ...customData.soal];
+          if (!saveCustom()) { customData = JSON.parse(backup); return; }
+          rebuildAppData();
+          closeStudioModal();
+          renderHome();
+          showToast(`Impor selesai: ${newM.length} bab baru, ${newS.length} soal.`);
+        } catch (err) {
+          showToast("Gagal membaca file JSON.");
+        } finally {
+          input.value = "";
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function downloadAllContentJson() {
+      const blob = new Blob([JSON.stringify(appData, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "SakuKelas_Kelas1_PaketMateri.json";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast("Paket materi JSON berhasil diunduh!");
+    }
+
+    let resetConfirmTimer = null;
+    function resetToDefaultContent() {
+      const btn = document.getElementById("btn-reset-default");
+      if (btn && btn.dataset.confirming !== "1") {
+        btn.dataset.confirming = "1";
+        btn.textContent = "Klik sekali lagi untuk konfirmasi reset";
+        resetConfirmTimer = setTimeout(() => {
+          btn.dataset.confirming = "0";
+          btn.textContent = "Reset Data Bawaan";
+        }, 3000);
+        return;
+      }
+      clearTimeout(resetConfirmTimer);
+      if (btn) {
+        btn.dataset.confirming = "0";
+        btn.textContent = "Reset Data Bawaan";
+      }
+      try {
+        localStorage.removeItem(STORAGE_KEYS.CUSTOM);
+        localStorage.removeItem(STORAGE_KEYS.CLOUD);
+      } catch (e) {}
+      baseData = normalizeData(DEFAULT_DATA);
+      customData = { materi: [], soal: [] };
+      rebuildAppData();
+      closeStudioModal();
+      renderHome();
+      showToast("Materi dikembalikan ke bawaan.");
+    }
+
+    if ("serviceWorker" in navigator && /^https?:$/.test(location.protocol)) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js").catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
